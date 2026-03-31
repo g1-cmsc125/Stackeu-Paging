@@ -34,9 +34,8 @@ class CacheSimulator {
     }
   }
 
-  runAllSelected() {
+ runAllSelected() {
     this.config.selectedAlgorithms.forEach(algoFullName => {
-      // Extract just the acronym (e.g., "FIFO" from "FIFO: First-In, First-Out")
       const algoKey = algoFullName.split(':')[0].trim().toUpperCase();
       
       switch (algoKey) {
@@ -44,6 +43,9 @@ class CacheSimulator {
         case 'LRU':  this.results[algoFullName] = this.simulateLRU(); break;
         case 'LFU':  this.results[algoFullName] = this.simulateLFU(); break;
         case 'OPT':  this.results[algoFullName] = this.simulateOPT(); break;
+        case 'MFU':  this.results[algoFullName] = this.simulateMFU(); break;
+        case 'SECOND CHANCE ALGORITHM': this.results[algoFullName] = this.simulateSecondChance(); break;
+        case 'ENHANCED SECOND CHANCE ALGORITHM': this.results[algoFullName] = this.simulateEnhancedSecondChance(); break;
         default: console.warn(`Algorithm ${algoKey} logic not implemented yet.`);
       }
     });
@@ -243,7 +245,147 @@ class CacheSimulator {
       });
     }
   }
+
+  simulateMFU() {
+    let frames = [], history = [], hits = 0, faults = 0;
+    let frequencies = new Map(), arrivalTimes = new Map(), time = 0;
+
+    for (let page of this.referenceString) {
+      time++;
+      let isHit = frames.includes(page);
+      
+      if (isHit) {
+        hits++;
+        frequencies.set(page, frequencies.get(page) + 1);
+      } else {
+        faults++;
+        if (frames.length < this.frameSize) {
+          frames.push(page);
+          frequencies.set(page, 1);
+          arrivalTimes.set(page, time);
+        } else {
+          // Find MFU page (Highest Frequency)
+          let maxFreq = -1, oldestTime = Infinity, mfuPage = -1;
+          for (let p of frames) {
+            let freq = frequencies.get(p), arrTime = arrivalTimes.get(p);
+            // Tie-breaker: If frequencies are equal, use FIFO (oldest arrival time)
+            if (freq > maxFreq || (freq === maxFreq && arrTime < oldestTime)) {
+              maxFreq = freq; oldestTime = arrTime; mfuPage = p;
+            }
+          }
+          frames = frames.filter(p => p !== mfuPage);
+          frequencies.delete(mfuPage);
+          arrivalTimes.delete(mfuPage);
+          
+          frames.push(page);
+          frequencies.set(page, 1);
+          arrivalTimes.set(page, time);
+        }
+      }
+      history.push(this.createStepRecord(page, isHit, frames));
+    }
+    return { history, hits, faults };
+  }
+
+  simulateSecondChance() {
+    let frames = [], history = [], hits = 0, faults = 0;
+    let refBits = []; // 1 for recently referenced, 0 for replaceable
+    let pointer = 0;  // Clock hand pointer
+
+    for (let page of this.referenceString) {
+      let isHit = frames.includes(page);
+      
+      if (isHit) {
+        hits++;
+        let index = frames.indexOf(page);
+        refBits[index] = 1; // Give a second chance
+      } else {
+        faults++;
+        if (frames.length < this.frameSize) {
+          frames.push(page);
+          refBits.push(1); // Newly loaded pages get a 1
+        } else {
+          // Sweep the clock hand until we find a 0
+          while (true) {
+            if (refBits[pointer] === 1) {
+              refBits[pointer] = 0; // Revoke second chance
+              pointer = (pointer + 1) % this.frameSize; // Move hand
+            } else {
+              // Found a 0, replace this victim
+              frames[pointer] = page;
+              refBits[pointer] = 1; // New page gets a 1
+              pointer = (pointer + 1) % this.frameSize; // Move hand past the new page
+              break;
+            }
+          }
+        }
+      }
+      history.push(this.createStepRecord(page, isHit, frames));
+    }
+    return { history, hits, faults };
+  }
+
+  simulateEnhancedSecondChance() {
+    let frames = [], history = [], hits = 0, faults = 0;
+    let refBits = [];
+    let modBits = []; 
+    let pointer = 0;
+
+    for (let page of this.referenceString) {
+      let isHit = frames.includes(page);
+      
+      // NOTE: Because a standard reference string ("7 0 1 2") doesn't tell us if it's 
+      // a Read or Write, we will deterministically mock the Modify bit for simulation purposes. 
+      // Let's assume even page numbers are "writes" (modified) and odds are "reads".
+      let isModified = (page % 2 === 0) ? 1 : 0; 
+
+      if (isHit) {
+        hits++;
+        let index = frames.indexOf(page);
+        refBits[index] = 1; 
+        if (isModified) modBits[index] = 1; 
+      } else {
+        faults++;
+        if (frames.length < this.frameSize) {
+          frames.push(page);
+          refBits.push(1);
+          modBits.push(isModified);
+        } else {
+          let replaced = false;
+          // Up to 4 passes for Enhanced Second Chance
+          while (!replaced) {
+            // Pass 1: Look for (0, 0) - Not referenced, Not modified. Don't change ref bits.
+            for (let i = 0; i < this.frameSize; i++) {
+              let p = (pointer + i) % this.frameSize;
+              if (refBits[p] === 0 && modBits[p] === 0) {
+                frames[p] = page; refBits[p] = 1; modBits[p] = isModified;
+                pointer = (p + 1) % this.frameSize; replaced = true; break;
+              }
+            }
+            if (replaced) break;
+
+            // Pass 2: Look for (0, 1) - Not referenced, Modified. Clear ref bits as we go.
+            for (let i = 0; i < this.frameSize; i++) {
+              let p = (pointer + i) % this.frameSize;
+              if (refBits[p] === 0 && modBits[p] === 1) {
+                frames[p] = page; refBits[p] = 1; modBits[p] = isModified;
+                pointer = (p + 1) % this.frameSize; replaced = true; break;
+              }
+              refBits[p] = 0; // Clear ref bit for the next potential pass
+            }
+            if (replaced) break;
+            
+            // If we get here, pass 2 cleared all the reference bits.
+            // The loop repeats and Pass 1 will definitely find a (0,0) or (0,1) now.
+          }
+        }
+      }
+      history.push(this.createStepRecord(page, isHit, frames));
+    }
+    return { history, hits, faults };
+  }
 }
+
 
 document.addEventListener('DOMContentLoaded', () => {
   new CacheSimulator();
