@@ -1,0 +1,162 @@
+/* Custom properties for specific start page elements */
+.config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.config-panel {
+    background-color: var(--card-bg-light);
+    border-radius: 30px;
+    padding: 30px;
+    box-shadow: var(--shadow-inset);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+}
+
+.section-title {
+    font-size: 2rem;
+    margin: 0;
+    font-weight: 700;
+}
+
+.sub-label {
+    font-size: 0.9rem;
+    margin: 5px 0 15px 0;
+    opacity: 0.8;
+}
+
+/* --- Form Elements --- */
+.main-input {
+    width: 100%;
+    height: 60px;
+    border-radius: 30px;
+    border: 3px solid #cddba9;
+    background: white;
+    padding: 0 20px;
+    font-size: 1.2rem;
+    color: var(--text-olive);
+    margin-bottom: 25px;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: auto;
+}
+
+.btn-secondary {
+    background-color: #cddba9; /* Muted green from your palette */
+    border: none;
+    padding: 12px;
+    border-radius: 20px;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* --- Algorithm List --- */
+.algo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.algo-item {
+    background: white;
+    border: 3px solid #cddba9;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.algo-item.selected {
+    background-color: var(--card-bg-dark);
+    color: white;
+    border-color: var(--card-bg-dark);
+}
+
+/* --- The Floating Simulate Button --- */
+.btn-simulate {
+    background-color: var(--card-bg-dark);
+    color: white;
+    text-decoration: none; /* In case you use an <a> tag */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Shape & Size */
+    min-width: 300px;  /* Adjust width to match your screenshot pill */
+    padding: 18px 60px;
+    border-radius: 40px; /* Highly rounded "pill" shape */
+    
+    /* Typography */
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    
+    /* Shadow & Effects */
+    border: none;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-simulate:hover {
+    transform: scale(1.03); /* Subtle pop on hover */
+    filter: brightness(1.1);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+}
+
+.btn-simulate:active {
+    transform: scale(0.98); /* Tactile "press" effect */
+}
+
+/* --- Page Wrapper Adjustment --- */
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1em;
+    
+}
+
+footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.5em;
+}
+
+header {
+    margin: 0;
+}
+
+/* After */
+.error-message {
+    color: #c0392b;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    display: none;
+    margin-top: -15px; /* pull it up closer to the input above */
+    margin-bottom: 10px;
+}
+
+.error-message.error-visible {
+    display: block;
+}
+
+.general-error {
+    text-align: center;
+    width: 100%;
+    margin-bottom: 8px;
+}

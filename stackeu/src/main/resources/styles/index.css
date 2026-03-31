@@ -1,0 +1,182 @@
+:root {
+    --bg-color: #F0EAB6;
+    --text-color: #6A6928;
+    --green-main: #8DB656;
+    --green-pale: #cddba9;
+    --yellow-muted: #cdbf72;
+    --white-glow: #EDF6D7;
+    --dark-shadow: rgba(0, 0, 0, 0.12);
+
+    --card-bg-light: #f1f8e6;
+    --card-bg-dark: #97b56a;
+    --text-olive: #606844;
+    --shadow-inset: inset 6px 6px 12px rgba(0, 0, 0, 0.1);
+    --shadow-drop: 4px 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-color);
+
+    min-height: 100vh;
+    overflow-y: auto;
+}
+
+.app-container {
+    display: flex;
+    flex: 1;
+
+    justify-content: center;
+    align-items: center;
+    gap: 80px;
+}
+
+/* --- Left Side Logic --- */
+.vertical-track {
+    border-left: 20px solid var(--white-glow);
+    border-right: 20px solid var(--white-glow);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+
+    height: 100vh;
+}
+
+.vertical-track img {
+    width: 500px;
+}
+
+.hex-cutout {
+    width: 200px;
+    height: 230px;
+    background-color: var(--bg-color);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* The Hexagon Shape */
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    /* The "Carved" Inset Shadow */
+    box-shadow: inset 8px 8px 15px var(--dark-shadow), 
+                inset -8px -8px 15px white;
+}
+
+/* Decorative Bars */
+.hex-bar {
+    width: 60px;
+    height: 10px;
+    background-color: var(--yellow-muted);
+    opacity: 0.6;
+    border-radius: 4px;
+    position: absolute;
+}
+.hex-bar.top { top: 35px; }
+.hex-bar.bottom { bottom: 35px; }
+
+/* The Stacked Pills */
+.pill-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transform: rotate(-3deg) skewY(-12deg); /* Perspective tilt */
+}
+
+.pill {
+    width: 100px;
+    height: 32px;
+    border-radius: 50px;
+    box-shadow: 2px 4px 6px rgba(0,0,0,0.05);
+}
+
+.p-green { background-color: var(--green-main); }
+.p-light { background-color: var(--green-pale); }
+.p-yellow { background-color: var(--yellow-muted); }
+
+/* --- Right Side Logic --- */
+.brand-logo {
+    font-size: 5rem;
+    font-weight: 800;
+    margin: 0 0 25px 0;
+    letter-spacing: 2px;
+}
+
+.brand-logo {
+    font-size: 4rem;
+    margin: 0 5px;
+}
+
+a {
+    text-decoration: none;
+    color: white;
+}
+
+.btn-row {
+    display: flex;
+    gap: 15px;
+}
+
+a {
+    background-color: var(--green-main);
+    color: white;
+    border: none;
+    border-radius: 15px;
+    font-size: 1.6rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 6px 12px var(--dark-shadow);
+    transition: all 0.2s ease;
+}
+
+.btn-main {
+    padding: 12px 35px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-sq {
+    width: 65px;
+    height: 65px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+}
+
+button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 5px var(--dark-shadow);
+}
+
+/* how and start specific reuse */
+.page-wrapper {
+    width: 900px;
+    padding: 20px;
+    text-align: center;
+}
+
+/* --- Header & Logo --- */
+header {
+    margin-bottom: 30px;
+}
+
+header img {
+    width: 75px;
+}
+

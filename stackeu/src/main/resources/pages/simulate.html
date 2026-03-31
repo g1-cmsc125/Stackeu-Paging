@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STACK•EU - Simulation</title>
+    <link rel="stylesheet" href="../styles/index.css">
+    <link rel="stylesheet" href="../styles/simulate.css"> 
+    <script  src="../scripts/simulate.js"></script>
+</head>
+<body>
+    <main class="page-wrapper simulate-page">
+        <header>
+            <img src="../assets/logo.png" alt="">
+            <p class="section-label">Reference String</p>
+            <h1 class="reference-string">7, 0, 1, 2, 0, 3, 0, 4, 2, 3</h1>
+        </header>
+
+        <div class="simulation-card">
+            <div class="sim-header">
+                <div class="algo-info">
+                    <h2 class="algo-name">FIFO: First-In, First-Out</h2>
+                </div>
+                <div class="controls">
+                    <button class="btn-ctrl pause"><span>❚❚</span></button>
+                    <button class="btn-ctrl reset"><span>↺</span></button>
+                    <button class="btn-ctrl skip"><span>▶▶</span></button>
+                </div>
+            </div>
+
+            <div class="sim-grid-container">
+                <div class="sim-grid">
+                    <div class="num-cell">7</div> <div class="num-cell">0</div> <div class="num-cell">1</div> <div class="num-cell">2</div> <div class="num-cell">0</div>
+                    <div class="num-cell">3</div> <div class="num-cell">0</div> <div class="num-cell">4</div> <div class="num-cell">2</div> <div class="num-cell">3</div>
+
+                    <div class="frame empty"></div> <div class="frame empty"></div> <div class="frame empty"></div> <div class="frame filled">2</div> <div class="frame filled">2</div>
+                    <div class="frame filled">2</div> <div class="frame filled">2</div> <div class="frame filled">2</div> <div class="frame filled">2</div> <div class="frame filled">2</div>
+
+                    <div class="frame empty"></div> <div class="frame empty"></div> <div class="frame filled">1</div> <div class="frame filled">1</div> <div class="frame filled">1</div>
+                    <div class="frame filled">1</div> <div class="frame filled">1</div> <div class="frame filled">4</div> <div class="frame filled">4</div> <div class="frame filled">4</div>
+
+                    <div class="frame empty"></div> <div class="frame filled">0</div> <div class="frame filled">0</div> <div class="frame filled">0</div> <div class="frame filled">0</div>
+                    <div class="frame filled">0</div> <div class="frame filled">0</div> <div class="frame filled">0</div> <div class="frame filled">0</div> <div class="frame filled">0</div>
+
+                    <div class="frame filled">7</div> <div class="frame filled">7</div> <div class="frame filled">7</div> <div class="frame filled">7</div> <div class="frame filled">7</div>
+                    <div class="frame filled">3</div> <div class="frame filled">3</div> <div class="frame filled">3</div> <div class="frame filled">3</div> <div class="frame filled">3</div>
+                </div>
+
+                <div class="legend-row">
+                    <span class="miss">Miss</span> <span class="miss">Miss</span> <span class="miss">Miss</span> <span class="miss">Miss</span> <span class="hit">Hit</span>
+                    <span class="miss">Miss</span> <span class="hit">Hit</span> <span class="miss">Miss</span> <span class="hit">Hit</span> <span class="hit">Hit</span>
+                </div>
+            </div>
+
+            <footer class="sim-footer">
+                <p class="stat-summary">Total page fault: 6</p>
+            </footer>
+        </div>
+
+        <div class="action-buttons">
+            <a class="btn-action primary">Restart Simulation</a>
+            <a href="../index.html" class="btn-action secondary">Main Menu</a>
+        </div>
+    </main>
+
+</body>
+</html>

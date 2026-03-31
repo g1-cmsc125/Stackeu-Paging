@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure Simulation - Stackeu</title>
+    <link rel="stylesheet" href="../styles/index.css">
+    <link rel="stylesheet" href="../styles/start.css">
+    <script src="../scripts/start.js"></script>
+</head>
+<body>
+
+    <div class="page-wrapper">
+        <header>
+            <img src="../assets/logo.png" alt="Stackeu Logo">
+        </header>
+
+        <main class="config-grid">
+            <section class="config-panel">
+                <div class="input-group">
+                    <h2 class="section-title">Enter Reference String</h2>
+                    <p class="sub-label">Length must be 10-40 and input values must be 0-20</p>
+                    <input type="text" id="referenceString" class="main-input" placeholder="Enter reference string">
+                    <div id="referenceError" class="error-message"></div>
+                </div>
+
+                <div class="input-group">
+                    <h2 class="section-title">Enter Frame size</h2>
+                    <p class="sub-label">Size must be 3-10</p>
+                    <input type="number" id="frameSize" class="main-input" placeholder="Enter frame size">
+                    <div id="frameSizeError" class="error-message"></div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="randomizeBtn" class="btn-secondary">Randomize</button>
+                    <button id="uploadBtn" class="btn-secondary">Upload</button>
+                    <button id="clearInputBtn" class="btn-secondary">Clear input</button>
+                </div>
+                <input type="file" id="fileUpload" accept=".txt" style="display: none;">
+            </section>
+
+            <section class="config-panel">
+                <h2 class="section-title">Choose algorithm</h2>
+                <p class="sub-label">You can choose 1 or more algorithm to simulate</p>
+                
+                <div class="algo-list">
+                    <div class="algo-item selected">FIFO: First-In, First-Out</div>
+                    <div class="algo-item">LRU: Least Recently Used</div>
+                    <div class="algo-item">OPT: Optimal Page Replacement</div>
+                    <div class="algo-item">LFU: Least Frequently Used</div>
+                    <div class="algo-item">MFU: Most Frequently Used</div>
+                    <div class="algo-item">Second Chance Algorithm</div>
+                    <div class="algo-item">Enhanced Second Chance Algorithm</div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div id="generalError" class="error-message"></div>
+            <button id="simulateBtn" class="btn-simulate">Simulate</button>
+        </footer>
+    </div>
+
+</body>
+</html>

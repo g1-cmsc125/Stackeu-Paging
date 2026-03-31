@@ -1,0 +1,124 @@
+:root {
+    --bg-color: #F0EAB6;
+    --card-bg-light: #f1f8e6;
+    --card-bg-dark: #97b56a;
+    --text-olive: #606844;
+    --active-blue: #4a90e2;
+    --shadow-inset: inset 6px 6px 12px rgba(0, 0, 0, 0.1);
+    --shadow-drop: 4px 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+body {
+    margin: 0;
+    background-color: var(--bg-color);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: var(--text-olive);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.title {
+    font-size: 2.5rem;
+    margin-top: 10px;
+}
+
+.hex-small {
+    width: 60px;
+    height: 70px;
+    margin: 0 auto;
+    background: var(--bg-color);
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    border: 4px solid #e8d689;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 3px;
+}
+
+.pill-s { width: 30px; height: 8px; border-radius: 10px; }
+.s-1 { background: #97b56a; }
+.s-2 { background: #cddba9; }
+.s-3 { background: #cdbf72; }
+
+/* --- Cards --- */
+.intro-card {
+    background-color: var(--card-bg-light);
+    padding: 25px 40px;
+    border-radius: 25px;
+    box-shadow: var(--shadow-inset);
+    margin-bottom: 30px;
+    line-height: 1.5;
+    font-weight: 600;
+    text-align: left;
+}
+
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.steps-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.step-card {
+    background-color: var(--card-bg-light);
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-inset);
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+}
+
+/* The specific step with the blue border */
+.step-card:last-child {
+    background-color: var(--card-bg-dark);
+    color: white;
+}
+
+.preview-card {
+    background-color: var(--card-bg-dark);
+    border-radius: 25px;
+    box-shadow: var(--shadow-inset);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    padding: 20px;
+}
+
+/* --- Button --- */
+.btn-back {
+    background-color: #97a66d;
+    color: white;
+    border: none;
+    padding: 15px 50px;
+    border-radius: 25px;
+    font-size: 1.3rem;
+    font-weight: bold;
+    box-shadow: var(--shadow-drop);
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.btn-back:hover {
+    filter: brightness(1.1);
+}
+
+.btn-back:active {
+    transform: translateY(2px);
+    box-shadow: none;
+}
+
+a {
+    text-decoration: none;
+}
