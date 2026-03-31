@@ -1,0 +1,202 @@
+/* simulate.css - Layout specific to simulation page */
+.simulate-page {
+    width: 1000px;
+}
+
+/* --- Header Section --- */
+.page-wrapper header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.mini-logo {
+    margin-bottom: 5px;
+}
+
+.section-label {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--text-color);
+    margin: 0 0 5px 0;
+}
+
+.reference-string {
+    font-size: 2.2rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+/* --- Simulation Card --- */
+.simulation-card {
+    background-color: var(--white-glow);
+    padding: 30px;
+    border-radius: 25px;
+    box-shadow: inset 8px 8px 15px var(--dark-shadow), 
+                inset -8px -8px 15px white;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.sim-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.algo-name {
+    font-size: 1.8rem;
+    margin: 0;
+    color: var(--text-color);
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-ctrl {
+    background-color: var(--green-main);
+    color: white;
+    border: none;
+    width: 45px;
+    height: 35px;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-ctrl span {
+    display: block;
+    transform: translateY(-1px);
+}
+
+/* --- The Grid --- */
+.sim-grid-container {
+    width: 100%;
+    overflow-x: auto;      /* Turns on horizontal scrolling */
+    overflow-y: hidden;    /* Prevents accidental vertical shifting */
+    padding-bottom: 15px;  /* Gives the scrollbar some breathing room */
+}
+
+/* Optional: Make the scrollbar look sleek and modern */
+.sim-grid-container::-webkit-scrollbar {
+    height: 8px;
+}
+.sim-grid-container::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+    border-radius: 4px;
+}
+.sim-grid-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1; 
+    border-radius: 4px;
+}
+.sim-grid-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8; 
+}
+
+/* Force perfect centering inside the grid cells */
+.num-cell, 
+.frame, 
+.hit, 
+.miss {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 100%; /* Ensures the cell takes up the full column width */
+}
+
+/* Keep the container scrollable from the previous step */
+.sim-grid-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 15px; 
+}
+
+/* Formatting for numbers above frames */
+.num-cell {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: var(--text-color);
+    height: 35px;
+}
+
+/* Core frame styling */
+.frame {
+    width: 60px;
+    height: 45px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: white;
+}
+
+.frame.empty {
+    background-color: var(--bg-color); /* Lightest beige */
+}
+
+.frame.filled {
+    background-color: #cdbf72; /* Muted yellow/brown */
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.15);
+}
+
+/* Hit/Miss styling */
+.legend-row {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 8px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.legend-row span {
+    text-transform: capitalize;
+}
+
+.miss { color: #84a261; }
+.hit { color: #b7a956; }
+
+/* --- Stats Footer --- */
+.stat-summary {
+    font-size: 1.6rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+/* --- Action Buttons --- */
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.btn-action {
+    background-color: var(--green-main);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 20px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 6px 10px var(--dark-shadow);
+}
+
+.btn-action.secondary {
+    opacity: 0.9;
+}
+
+.btn-action:hover {
+    filter: brightness(1.05);
+}
