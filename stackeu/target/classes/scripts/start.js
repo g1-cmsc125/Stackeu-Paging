@@ -313,39 +313,57 @@ class StartConfig {
    * Reads frame size directly from DOM to catch values not yet synced to config
    */
   proceedToSimulation() {
-    const referenceVal = this.config.referenceString;
-
-    const frameSizeInput = document.getElementById('frameSize');
-    const frameSizeVal = frameSizeInput ? parseInt(frameSizeInput.value) : NaN;
-
+    this.showError('generalError', '');
+    
+    // 1. Get the values
+    const refInput = document.getElementById('referenceString');
+    const frameInput = document.getElementById('frameSize');
+    
+    if (!refInput || !frameInput) return;
+    
+    const refStr = refInput.value.trim();
+    const frameSizeVal = parseInt(frameInput.value);
     const algosSelected = this.config.selectedAlgorithms.length > 0;
 
-    const tokens = referenceVal ? referenceVal.split(/\s+/) : [];
-    if (!referenceVal || tokens.length < 10 || tokens.length > 40) {
-      this.showError('referenceError', 'Please enter a valid reference string (10–40 page references)');
-      return;
-    }
-
-    if (isNaN(frameSizeVal) || frameSizeVal < 3 || frameSizeVal > 10) {
-      this.showError('frameSizeError', 'Frame size must be between 3 and 10');
+    // 2. Validate everything before switching
+    if (!refStr || isNaN(frameSizeVal) || frameSizeVal < 3 || frameSizeVal > 10) {
+      this.showError('generalError', 'Please fix the input errors before simulating.');
       return;
     }
 
     if (!algosSelected) {
-      this.showError('generalError', 'Please select at least one algorithm');
+      this.showError('generalError', 'Please select at least one algorithm.');
       return;
     }
 
+    // 3. Save the valid configuration
+    this.config.referenceString = refStr;
     this.config.frameSize = frameSizeVal;
     this.saveConfig();
-    window.location.href = 'simulate.html';
+
+    // 4. CALL APPBRIDGE TO SWITCH THE VIEW
+    if (window.javaApp) {
+        // Calls the Java method we just uncommented
+        window.javaApp.navigate('simulate');
+        
+        // Wait 50ms for the screen to switch, then trigger the math
+        setTimeout(() => { 
+            if(typeof window.javaApp.triggerSimulation === 'function') {
+                window.javaApp.triggerSimulation(); 
+            }
+        }, 50);
+    } else {
+        // Fallback if running in a standard web browser (like Chrome)
+        window.location.href = 'simulate.html';
+    }
   }
 
   /**
    * Save configuration to localStorage
    */
   saveConfig() {
-    localStorage.setItem('cacheSimulationConfig', JSON.stringify(this.config));
+    // Only use sessionStorage so it dies when the app closes
+    sessionStorage.setItem('cacheSimulationConfig', JSON.stringify(this.config));
   }
 
   /**
@@ -353,7 +371,7 @@ class StartConfig {
    */
   loadStoredConfig() {
     try {
-      const stored = localStorage.getItem('cacheSimulationConfig');
+      const stored = sessionStorage.getItem('cacheSimulationConfig');
       if (stored) {
         this.config = JSON.parse(stored);
 
@@ -374,6 +392,9 @@ class StartConfig {
             }
           });
         }
+      } else {
+        // IMPORTANT: If no session exists, force a clean slate in the UI!
+        this.clearAllInput();
       }
     } catch (error) {
       console.error('Error loading stored config:', error);

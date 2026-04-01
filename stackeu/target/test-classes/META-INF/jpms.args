@@ -1,4 +1,0 @@
---patch-module
-stackeu=_
---add-reads
-stackeu=ALL-UNNAMED

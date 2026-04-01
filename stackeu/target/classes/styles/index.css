@@ -30,7 +30,13 @@ body {
 
     min-height: 100vh;
     overflow-y: auto;
-}
+    animation: fadeIn 0.2s ease-in-out;
+} 
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+} /* <--- THIS WAS THE MISSING BRACE! */
 
 .app-container {
     display: flex;
@@ -179,4 +185,3 @@ header {
 header img {
     width: 75px;
 }
-
