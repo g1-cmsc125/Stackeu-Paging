@@ -12,21 +12,17 @@ public class App extends Application {
     public void start(Stage primaryStage) {
         AppFrame root = new AppFrame(primaryStage);
         
-        // 1. Get the screen dimensions dynamically
         Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-        
-        // 2. Set the scene to match the user's screen dimensions
+       
         Scene scene = new Scene(root, screenBounds.getWidth(), screenBounds.getHeight()); 
         
-        primaryStage.setTitle("StackEU App");
+        primaryStage.setTitle("Stackeu");
         primaryStage.setScene(scene);
-        
-        // 3. Maximize the window automatically
+    
         primaryStage.setMaximized(true); 
         
-        // NOTE: If you want a TRUE fullscreen (like a video game, hiding the Windows taskbar), 
-        // comment out the line above and uncomment the line below:
-        // primaryStage.setFullScreen(true);
+        // setting up full screen
+        primaryStage.setFullScreen(true);
         
         primaryStage.show();
     }

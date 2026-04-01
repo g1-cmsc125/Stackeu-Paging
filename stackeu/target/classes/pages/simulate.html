@@ -4,63 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STACK•EU - Simulation</title>
+    
     <link rel="stylesheet" href="../styles/index.css">
     <link rel="stylesheet" href="../styles/simulate.css"> 
-    <script  src="../scripts/simulate.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script src="../scripts/simulate.js"></script>
 </head>
 <body>
-    <main class="page-wrapper simulate-page">
+    
+    <main class="page-wrapper simulate-page" id="export-target">
+        
         <header>
-            <img src="../assets/logo.png" alt="">
+            <img src="../assets/logo.png" alt="StackEU Logo">
             <p class="section-label">Reference String</p>
-            <h1 class="reference-string">7, 0, 1, 2, 0, 3, 0, 4, 2, 3</h1>
+            <h1 class="reference-string">Loading...</h1>
         </header>
 
-        <div class="simulation-card">
-            <div class="sim-header">
-                <div class="algo-info">
-                    <h2 class="algo-name">FIFO: First-In, First-Out</h2>
-                </div>
-                <div class="controls">
-                    <button class="btn-ctrl pause"><span>❚❚</span></button>
-                    <button class="btn-ctrl reset"><span>↺</span></button>
-                    <button class="btn-ctrl skip"><span>▶▶</span></button>
-                </div>
-            </div>
-
-            <div class="sim-grid-container">
-                <div class="sim-grid">
-                    <div class="num-cell">7</div> <div class="num-cell">0</div> <div class="num-cell">1</div> <div class="num-cell">2</div> <div class="num-cell">0</div>
-                    <div class="num-cell">3</div> <div class="num-cell">0</div> <div class="num-cell">4</div> <div class="num-cell">2</div> <div class="num-cell">3</div>
-
-                    <div class="frame empty"></div> <div class="frame empty"></div> <div class="frame empty"></div> <div class="frame filled">2</div> <div class="frame filled">2</div>
-                    <div class="frame filled">2</div> <div class="frame filled">2</div> <div class="frame filled">2</div> <div class="frame filled">2</div> <div class="frame filled">2</div>
-
-                    <div class="frame empty"></div> <div class="frame empty"></div> <div class="frame filled">1</div> <div class="frame filled">1</div> <div class="frame filled">1</div>
-                    <div class="frame filled">1</div> <div class="frame filled">1</div> <div class="frame filled">4</div> <div class="frame filled">4</div> <div class="frame filled">4</div>
-
-                    <div class="frame empty"></div> <div class="frame filled">0</div> <div class="frame filled">0</div> <div class="frame filled">0</div> <div class="frame filled">0</div>
-                    <div class="frame filled">0</div> <div class="frame filled">0</div> <div class="frame filled">0</div> <div class="frame filled">0</div> <div class="frame filled">0</div>
-
-                    <div class="frame filled">7</div> <div class="frame filled">7</div> <div class="frame filled">7</div> <div class="frame filled">7</div> <div class="frame filled">7</div>
-                    <div class="frame filled">3</div> <div class="frame filled">3</div> <div class="frame filled">3</div> <div class="frame filled">3</div> <div class="frame filled">3</div>
-                </div>
-
-                <div class="legend-row">
-                    <span class="miss">Miss</span> <span class="miss">Miss</span> <span class="miss">Miss</span> <span class="miss">Miss</span> <span class="hit">Hit</span>
-                    <span class="miss">Miss</span> <span class="hit">Hit</span> <span class="miss">Miss</span> <span class="hit">Hit</span> <span class="hit">Hit</span>
-                </div>
-            </div>
-
-            <footer class="sim-footer">
-                <p class="stat-summary">Total page fault: 6</p>
-            </footer>
+       <div class="action-buttons">
+            <a class="btn-action primary small-btn" style="cursor: pointer;" onclick="if(window.javaApp){javaApp.navigate('start'); return false;} else {window.location.href='start.html';}">Restart</a>
+            
+            <button id="exportImgBtn" class="btn-action export small-btn" style="cursor: pointer;">Save IMG</button>
+            <button id="exportPdfBtn" class="btn-action export small-btn" style="cursor: pointer; background-color: #c0392b;">Save PDF</button>
+            
+            <a href="../index.html" class="btn-action secondary small-btn" onclick="if(window.javaApp){javaApp.navigate('home'); return false;}">Main Menu</a>
         </div>
 
-        <div class="action-buttons">
-            <a class="btn-action primary">Restart Simulation</a>
-            <a href="../index.html" class="btn-action secondary">Main Menu</a>
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loader-content">
+                <div class="spinner"></div>
+                <h2 id="loadingText" style="color: var(--text-color); margin: 0;">Processing...</h2>
+                <p style="color: var(--text-olive); margin: 0;">Please wait while we generate your file.</p>
+            </div>
         </div>
+        
     </main>
 
 </body>

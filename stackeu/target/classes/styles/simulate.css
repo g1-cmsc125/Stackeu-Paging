@@ -56,6 +56,7 @@
 .controls {
     display: flex;
     gap: 10px;
+    align-items: center;
 }
 
 .btn-ctrl {
@@ -76,15 +77,28 @@
     transform: translateY(-1px);
 }
 
-/* --- The Grid --- */
-.sim-grid-container {
-    width: 100%;
-    overflow-x: auto;      /* Turns on horizontal scrolling */
-    overflow-y: hidden;    /* Prevents accidental vertical shifting */
-    padding-bottom: 15px;  /* Gives the scrollbar some breathing room */
+/* --- Timer --- */
+.sim-timer {
+    font-weight: bold;
+    font-size: 1.2rem;
+    background: var(--card-bg-light);
+    padding: 6px 15px;
+    border-radius: 20px;
+    color: var(--text-olive);
+    border: 2px solid var(--green-pale);
+    display: flex;
+    align-items: center;
 }
 
-/* Optional: Make the scrollbar look sleek and modern */
+/* --- The Grid & Bold Columns --- */
+.sim-grid-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 15px; 
+}
+
+/* Scrollbar styling */
 .sim-grid-container::-webkit-scrollbar {
     height: 8px;
 }
@@ -100,7 +114,12 @@
     background: #a8a8a8; 
 }
 
-/* Force perfect centering inside the grid cells */
+.sim-grid {
+    background-color: transparent;
+    gap: 6px; /* Spacing between columns */
+    padding-top: 5px;
+}
+
 .num-cell, 
 .frame, 
 .hit, 
@@ -109,51 +128,51 @@
     justify-content: center;
     align-items: center;
     text-align: center;
-    width: 100%; /* Ensures the cell takes up the full column width */
-}
-
-/* Keep the container scrollable from the previous step */
-.sim-grid-container {
     width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 15px; 
 }
 
-/* Formatting for numbers above frames */
 .num-cell {
     font-size: 1.6rem;
     font-weight: bold;
-    color: var(--text-color);
     height: 35px;
+    background-color: var(--card-bg-dark);
+    color: white;
+    border: 2px solid var(--card-bg-dark);
+    border-radius: 8px 8px 0 0; /* Rounded top */
+    margin-bottom: 2px;
 }
 
-/* Core frame styling */
+/* Core frame styling (Solid Block Aesthetic) */
 .frame {
-    width: 60px;
     height: 45px;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     font-size: 1.4rem;
     font-weight: bold;
     color: white;
+    border-left: 2px solid var(--green-pale);
+    border-right: 2px solid var(--green-pale);
+    border-bottom: 2px solid var(--green-pale);
+    background-color: rgba(205, 219, 169, 0.2);
+    margin-bottom: 2px;
 }
 
 .frame.empty {
-    background-color: var(--bg-color); /* Lightest beige */
+    background-color: var(--bg-color); 
+}
+
+.frame:last-of-type {
+    border-radius: 0 0 8px 8px; /* Rounded bottom */
 }
 
 .frame.filled {
-    background-color: #cdbf72; /* Muted yellow/brown */
-    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.15);
+    background-color: var(--yellow-muted);
+    border-color: var(--yellow-muted);
 }
 
 /* Hit/Miss styling */
 .legend-row {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
+    background-color: rgba(96, 104, 68, 0.05);
+    padding: 10px;
+    border-radius: 12px;
     gap: 8px;
     text-align: center;
     font-size: 1rem;
@@ -162,6 +181,11 @@
 
 .legend-row span {
     text-transform: capitalize;
+    background-color: var(--card-bg-light);
+    border: 2px solid var(--green-pale);
+    border-radius: 8px;
+    margin-top: 5px;
+    padding: 5px 0;
 }
 
 .miss { color: #84a261; }
@@ -178,25 +202,156 @@
 .action-buttons {
     display: flex;
     justify-content: center;
-    gap: 20px;
+    align-items: center;
+    gap: 15px; /* Tighter gap for small buttons */
 }
 
 .btn-action {
     background-color: var(--green-main);
     color: white;
     border: none;
-    padding: 15px 40px;
-    border-radius: 20px;
-    font-size: 1.4rem;
     font-weight: bold;
     cursor: pointer;
     box-shadow: 0 6px 10px var(--dark-shadow);
+    text-align: center;
+}
+
+.btn-action.small-btn {
+    padding: 12px 25px;
+    font-size: 1.1rem;
+    border-radius: 15px;
+    min-width: 140px;
 }
 
 .btn-action.secondary {
     opacity: 0.9;
 }
 
+.btn-action.export {
+    background-color: var(--text-color);
+}
+
 .btn-action:hover {
     filter: brightness(1.05);
+    transform: translateY(-2px);
+    transition: all 0.2s;
 }
+
+/* --- Animation Classes --- */
+.step-hidden {
+    opacity: 0.1; 
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.step-visible {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.num-cell.active-ref {
+    background-color: var(--green-main);
+    color: white;
+    border-radius: 8px;
+    transform: scale(1.1);
+    transition: all 0.2s;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.frame.active-frame {
+    outline: 4px solid var(--active-blue);
+    transform: scale(1.05);
+    z-index: 10;
+    transition: all 0.2s;
+}
+
+/* --- The Grid & Flat Vectors (Matching Mockup) --- */
+.sim-grid-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 15px; 
+}
+
+/* Scrollbar styling */
+.sim-grid-container::-webkit-scrollbar { height: 8px; }
+.sim-grid-container::-webkit-scrollbar-track { background: #e0dcb3; border-radius: 4px; }
+.sim-grid-container::-webkit-scrollbar-thumb { background: var(--green-main); border-radius: 4px; }
+.sim-grid-container::-webkit-scrollbar-thumb:hover { background: #719642; }
+
+.sim-grid {
+    background-color: transparent;
+    gap: 6px; 
+    padding-top: 5px;
+}
+
+.num-cell, .frame, .hit, .miss {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+}
+
+/* Flat Reference String Header */
+.num-cell {
+    font-size: 1.6rem;
+    font-weight: bold;
+    height: 40px;
+    background: transparent; /* No background box */
+    color: var(--text-color);
+    border: none;
+    box-shadow: none;
+    margin-bottom: 6px;
+}
+
+/* Flat Frames (Solid Mustard with rounded corners) */
+.frame {
+    height: 45px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    background-color: rgba(205, 219, 169, 0.4); /* Faded placeholder */
+    border-radius: 8px; /* Rounded corners for EVERY frame */
+    margin-bottom: 4px;
+    border: none;
+    box-shadow: none;
+}
+
+.frame.empty { 
+    background-color: rgba(205, 219, 169, 0.3); 
+}
+
+.frame.filled {
+    background-color: var(--yellow-muted); /* Solid mustard */
+    color: white; 
+}
+
+/* Highlight manipulated frame (Olive Green) */
+.frame.active-frame {
+    background-color: var(--card-bg-dark); 
+    transform: scale(1.05);
+    transition: all 0.2s;
+}
+
+/* Flat Legends */
+.legend-row {
+    background-color: transparent;
+    padding: 10px 0 0 0;
+    gap: 6px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+    box-shadow: none;
+}
+
+.legend-row span {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
+
+/* Match the exact colors from your Animation Guide */
+.miss { color: #d8737f; } /* Pinkish Red */
+.hit { color: #5f7adb; }  /* Blue */

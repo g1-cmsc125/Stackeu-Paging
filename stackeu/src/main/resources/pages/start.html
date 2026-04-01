@@ -57,7 +57,16 @@
 
         <footer>
             <div id="generalError" class="error-message"></div>
-            <button id="simulateBtn" class="btn-simulate">Simulate</button>
+            
+            <div style="display: flex; justify-content: center; gap: 20px; align-items: center; margin-top: 15px;">
+                <a href="../index.html" class="btn-action secondary" 
+                   style="background-color: #97b56a; color: white; padding: 18px 40px; border-radius: 40px; font-size: 1.5rem; font-weight: bold; text-decoration: none; cursor: pointer; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);"
+                   onclick="if(window.javaApp){javaApp.navigate('home'); return false;}">
+                   Main Menu
+                </a>
+                
+                <button id="simulateBtn" class="btn-simulate">Simulate</button>
+            </div>
         </footer>
     </div>
 
