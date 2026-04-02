@@ -32,11 +32,11 @@
             <a href="../index.html" class="btn-action secondary small-btn" onclick="if(window.javaApp){javaApp.navigate('home'); return false;}">Main Menu</a>
         </div>
 
-        <div id="loadingOverlay" class="loading-overlay">
-            <div class="loader-content">
+        <div id="exportLoadingOverlay" class="loading-overlay hidden">
+            <div class="loading-modal">
                 <div class="spinner"></div>
-                <h2 id="loadingText" style="color: var(--text-color); margin: 0;">Processing...</h2>
-                <p style="color: var(--text-olive); margin: 0;">Please wait while we generate your file.</p>
+                <h3 id="loadingTitle">Processing Export...</h3>
+                <p>Please wait while we generate your file.</p>
             </div>
         </div>
         

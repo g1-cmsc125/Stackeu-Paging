@@ -1,5 +1,13 @@
 package stackeu;
 
+import javafx.scene.image.WritableImage;
+import javafx.embed.swing.SwingFXUtils;
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.Logger;
+import javafx.scene.SnapshotParameters;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.scene.layout.StackPane;
@@ -8,8 +16,9 @@ import javafx.stage.Stage;
 import netscape.javascript.JSObject;
 
 public class AppFrame extends StackPane {
-    private AppBridge bridge;
-    private WebView homeView, hiwView, startView, simulateView;
+    private static final Logger LOGGER = Logger.getLogger(AppFrame.class.getName());
+    private final AppBridge bridge;
+    private final WebView homeView, hiwView, startView, simulateView;
 
     public AppFrame(Stage stage) {
         bridge = new AppBridge(this);
@@ -23,8 +32,11 @@ public class AppFrame extends StackPane {
         // Stack them all on top of each other
         this.getChildren().addAll(simulateView, startView, hiwView, homeView);
 
-        // Hide all except home
-        switchView("home");
+        // Hide all except home by setting initial visibility
+        homeView.setVisible(true);
+        hiwView.setVisible(false);
+        startView.setVisible(false);
+        simulateView.setVisible(false);
     }
 
     private WebView createWebView(String path) {
@@ -34,6 +46,7 @@ public class AppFrame extends StackPane {
 
         webView.getEngine().getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
+                @SuppressWarnings("removal")
                 JSObject window = (JSObject) webView.getEngine().executeScript("window");
                 window.setMember("javaApp", bridge);
             }
@@ -70,5 +83,23 @@ public class AppFrame extends StackPane {
 
     public void executeOnSimulateView(String script) {
         Platform.runLater(() -> simulateView.getEngine().executeScript(script));
+    }
+
+    public void exportSimulationToImage() {
+        Platform.runLater(() -> {
+            try {
+                WritableImage snapshot = simulateView.snapshot(new SnapshotParameters(), null);
+                String timeStamp = new SimpleDateFormat("MMddyy_HHmmss").format(new Date());
+                File outputFile = new File(timeStamp + "_PG.png");
+                
+                ImageIO.write(SwingFXUtils.fromFXImage(snapshot, null), "png", outputFile);
+                
+                // Alert user that it worked
+                simulateView.getEngine().executeScript("alert('Saved successfully as: " + outputFile.getAbsolutePath().replace("\\", "\\\\") + "');");
+            } catch (Exception e) {
+                e.printStackTrace();
+                simulateView.getEngine().executeScript("alert('Error saving image.');");
+            }
+        });
     }
 }

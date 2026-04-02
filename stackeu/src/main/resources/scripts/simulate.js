@@ -17,19 +17,34 @@ class CacheSimulator {
       this.runAllSelected();
       this.renderUI();
       this.setupGlobalControls();
+      
+      // Trigger the background pre-rendering for the export feature
+      setTimeout(() => preRenderExports('export-target'), 1000); 
     }, 50); 
   }
 
   loadConfig() {
     try {
-      // Prioritize sessionStorage so old sessions clear when the app closes
-      const stored = sessionStorage.getItem('cacheSimulationConfig') || localStorage.getItem('cacheSimulationConfig');
-      if (stored) {
+      let stored = null;
+      
+      // 1. Ask Java for the config first
+      if (window.javaApp && typeof window.javaApp.getConfig === 'function') {
+          stored = window.javaApp.getConfig();
+      } 
+      
+      // 2. Fallback for normal web browser testing
+      if (!stored || stored === "") {
+          stored = sessionStorage.getItem('cacheSimulationConfig') || localStorage.getItem('cacheSimulationConfig');
+      }
+
+      if (stored && stored !== "") {
         this.config = JSON.parse(stored);
         this.referenceString = this.config.referenceString.split(/\s+/).map(Number);
         this.frameSize = this.config.frameSize;
       } else {
-        window.location.href = '../index.html'; // Redirect if no config
+        // If no config found, safely retreat
+        if (window.javaApp) window.javaApp.navigate('start');
+        else window.location.href = '../index.html'; 
       }
     } catch (error) {
       console.error('Error loading config:', error);
@@ -286,6 +301,18 @@ class CacheSimulator {
   // UI RENDERING & ANIMATION
   // ==========================================
 
+  scrollToActiveElement(containerElement, targetElement) {
+    if (containerElement && targetElement) {
+        const containerCenter = containerElement.clientWidth / 2;
+        const activeCellCenter = targetElement.offsetLeft + (targetElement.clientWidth / 2);
+        
+        containerElement.scrollTo({
+            left: activeCellCenter - containerCenter,
+            behavior: 'auto' // Use 'auto' instead of 'smooth' to keep up with faster speeds
+        });
+    }
+  }
+
   renderUI() {
     const refStringHeader = document.querySelector('.reference-string');
     if (refStringHeader) refStringHeader.textContent = this.referenceString.join(', ');
@@ -359,17 +386,18 @@ class CacheSimulator {
     let isPlaying = false;
     let intervalId = null;
     let speedMs = 1000; 
-    let timeElapsed = 0.0; // Tracker for the timer
+    let timeElapsed = 0.0; 
 
     const btnPause = card.querySelector('.pause');
     const btnReset = card.querySelector('.reset');
     const btnSkip = card.querySelector('.skip');
     const btnSpeed = card.querySelector('.speed-toggle');
     const timeDisplay = card.querySelector('.time-sec');
+    const scrollContainer = card.querySelector('.sim-grid-container');
 
     const clearHighlights = () => {
       card.querySelectorAll('.active-ref, .active-frame').forEach(el => {
-        el.classList.remove('active-ref', 'active-frame');
+        el.classList.remove('active-ref', 'active-frame', 'frame-hit', 'frame-miss');
       });
     };
 
@@ -380,13 +408,26 @@ class CacheSimulator {
         return;
       }
       clearHighlights();
+      
+      const legendSpan = card.querySelector(`span[data-col="${stepIndex}"]`);
+      const isHit = legendSpan && legendSpan.classList.contains('hit');
+
       const elements = card.querySelectorAll(`[data-col="${stepIndex}"]`);
       elements.forEach(el => {
         el.classList.remove('step-hidden');
         el.classList.add('step-visible');
         if (el.classList.contains('num-cell')) el.classList.add('active-ref');
-        if (el.classList.contains('target-frame')) el.classList.add('active-frame');
+        
+        if (el.classList.contains('target-frame')) {
+            el.classList.add('active-frame');
+            el.classList.add(isHit ? 'frame-hit' : 'frame-miss');
+        }
       });
+
+      // Implement the auto-scroll horizontally
+      if (elements.length > 0) {
+          this.scrollToActiveElement(scrollContainer, elements[0]);
+      }
     };
 
     const playAnim = () => {
@@ -395,7 +436,7 @@ class CacheSimulator {
       btnPause.innerHTML = '<span>❚❚</span>';
       intervalId = setInterval(() => {
         currentStep++;
-        timeElapsed += (speedMs / 1000); // Update timer mathematically
+        timeElapsed += (speedMs / 1000); 
         timeDisplay.textContent = timeElapsed.toFixed(1);
         showStep(currentStep);
       }, speedMs);
@@ -417,12 +458,12 @@ class CacheSimulator {
         el.classList.remove('step-visible');
         el.classList.add('step-hidden');
       });
+      scrollContainer.scrollTo({ left: 0, behavior: 'smooth' }); // Scroll back to start
     };
 
     const skipToEnd = () => {
       pauseAnim();
       clearHighlights();
-      // Fast forward the timer mathematically based on remaining steps
       let remaining = totalSteps - Math.max(0, currentStep);
       timeElapsed += (remaining * (speedMs / 1000));
       timeDisplay.textContent = timeElapsed.toFixed(1);
@@ -433,6 +474,9 @@ class CacheSimulator {
       });
       currentStep = totalSteps;
       btnPause.innerHTML = '<span>↺</span>';
+      
+      // Scroll to the very end
+      scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
     };
 
     btnPause.addEventListener('click', () => isPlaying ? pauseAnim() : playAnim());
@@ -450,20 +494,22 @@ class CacheSimulator {
   }
 
   setupGlobalControls() {
-    // Session Wipe Helper
     const clearSessionAndNavigate = (viewName, fallbackPath) => {
-        // Destroy the configuration from memory entirely
         sessionStorage.removeItem('cacheSimulationConfig');
         localStorage.removeItem('cacheSimulationConfig');
         
         if (window.javaApp) {
+            // FIX: Tell Java to delete the memory when we go back!
+            if (typeof window.javaApp.saveConfig === 'function') {
+                window.javaApp.saveConfig(""); 
+            }
             window.javaApp.navigate(viewName);
         } else {
             window.location.href = fallbackPath;
         }
     };
 
-    // Replace the 'Restart' button click behavior completely
+    // ... (Keep the rest of your restartBtn and mainMenuBtn logic here)
     const restartBtn = document.querySelector('.btn-action.primary');
     if (restartBtn) {
       restartBtn.onclick = (e) => {
@@ -472,7 +518,6 @@ class CacheSimulator {
       };
     }
 
-    // Replace the 'Main Menu' button click behavior completely
     const mainMenuBtn = document.querySelector('.btn-action.secondary');
     if (mainMenuBtn) {
       mainMenuBtn.onclick = (e) => {
@@ -483,6 +528,91 @@ class CacheSimulator {
   }
 } // <--- End of CacheSimulator Class
 
+// ==========================================
+// EXPORT LOGIC (Native Pre-Saving)
+// ==========================================
+let preSavedImgUrl = null;
+let preSavedPdfUrl = null;
+
+const showLoading = (text) => {
+    const title = document.getElementById('loadingTitle');
+    const overlay = document.getElementById('exportLoadingOverlay');
+    if (title) title.innerText = text;
+    if (overlay) overlay.classList.remove('hidden');
+};
+
+const hideLoading = () => {
+    const overlay = document.getElementById('exportLoadingOverlay');
+    if (overlay) overlay.classList.add('hidden');
+};
+
+const getFileName = (extension) => {
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const yy = String(now.getFullYear()).slice(-2);
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    return `${mm}${dd}${yy}_${hh}${min}${ss}_PG.${extension}`;
+};
+
+const triggerDownload = (url, filename) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+// This function silently renders the full table in the background
+async function preRenderExports(targetElementId) {
+    const target = document.getElementById(targetElementId);
+    if (!target) return;
+
+    // Temporarily reveal everything to take the picture
+    const hiddenElements = document.querySelectorAll('.step-hidden');
+    hiddenElements.forEach(el => {
+        el.classList.remove('step-hidden');
+        el.classList.add('step-visible');
+    });
+
+    const originalOverflow = target.style.overflowX;
+    target.style.overflowX = 'visible'; 
+
+    try {
+        if (typeof html2canvas !== 'undefined') {
+            const canvas = await html2canvas(target, { backgroundColor: '#F0EAB6', scale: 2 });
+            
+            // 1. Create Image Blob
+            canvas.toBlob((blob) => {
+                preSavedImgUrl = URL.createObjectURL(blob);
+            }, 'image/png');
+
+            // 2. Create PDF Blob
+            if (window.jspdf) {
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('l', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                preSavedPdfUrl = pdf.output('bloburl'); 
+            }
+        }
+    } catch (error) {
+        console.error("Background rendering failed:", error);
+    } finally {
+        // Restore UI state back to hidden
+        target.style.overflowX = originalOverflow;
+        hiddenElements.forEach(el => {
+            el.classList.remove('step-visible');
+            el.classList.add('step-hidden');
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const sim = new CacheSimulator();
 
@@ -492,77 +622,37 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => sim.init(), 50);
     }
 
-    // Export Elements
+    // Export Button Listeners
     const exportImgBtn = document.getElementById('exportImgBtn');
     const exportPdfBtn = document.getElementById('exportPdfBtn');
-    const target = document.getElementById('export-target');
-    
-    // Popup Elements
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const loadingText = document.getElementById('loadingText');
-
-    const getFileName = (extension) => {
-      const now = new Date();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      const yy = String(now.getFullYear()).slice(-2);
-      const hh = String(now.getHours()).padStart(2, '0');
-      const min = String(now.getMinutes()).padStart(2, '0');
-      const ss = String(now.getSeconds()).padStart(2, '0');
-      return `${mm}${dd}${yy}_${hh}${min}${ss}_PG.${extension}`;
-    };
-
-    const prepareCapture = () => {
-      document.querySelectorAll('.step-hidden').forEach(el => el.classList.remove('step-hidden'));
-      document.querySelectorAll('.active-ref, .active-frame').forEach(el => el.classList.remove('active-ref', 'active-frame'));
-      target.style.overflowX = 'visible'; 
-    };
-
-    const showLoading = (text) => {
-        if (loadingText) loadingText.textContent = text;
-        if (loadingOverlay) loadingOverlay.classList.add('active');
-    };
-
-    const hideLoading = () => {
-        if (loadingOverlay) loadingOverlay.classList.remove('active');
-        target.style.overflowX = 'auto'; // Restore scroll
-    };
 
     if (exportImgBtn) {
-      exportImgBtn.addEventListener('click', () => {
-        showLoading('Generating Image...');
-        
-        // Wait 50ms so the UI can paint the popup BEFORE html2canvas freezes the browser
-        setTimeout(() => {
-            prepareCapture();
-            html2canvas(target, { backgroundColor: '#F0EAB6', scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = getFileName('png');
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                hideLoading();
-            });
-        }, 50);
-      });
+        exportImgBtn.addEventListener('click', () => {
+            if (preSavedImgUrl) {
+                triggerDownload(preSavedImgUrl, getFileName('png'));
+            } else {
+                showLoading("Still rendering in the background...");
+                setTimeout(() => {
+                    hideLoading();
+                    if (preSavedImgUrl) triggerDownload(preSavedImgUrl, getFileName('png'));
+                    else alert("Render failed. Make sure you are not running this directly from the file system without a local server.");
+                }, 1500);
+            }
+        });
     }
 
     if (exportPdfBtn) {
-      exportPdfBtn.addEventListener('click', () => {
-        showLoading('Generating PDF...');
-        
-        setTimeout(() => {
-            prepareCapture();
-            html2canvas(target, { backgroundColor: '#F0EAB6', scale: 2 }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('l', 'mm', 'a4'); 
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save(getFileName('pdf'));
-                hideLoading();
-            });
-        }, 50);
-      });
+        exportPdfBtn.addEventListener('click', () => {
+            if (preSavedPdfUrl) {
+                triggerDownload(preSavedPdfUrl, getFileName('pdf'));
+            } else {
+                showLoading("Still rendering in the background...");
+                setTimeout(() => {
+                    hideLoading();
+                    if (preSavedPdfUrl) triggerDownload(preSavedPdfUrl, getFileName('pdf'));
+                    else alert("Render failed. Make sure you are not running this directly from the file system without a local server.");
+                }, 1500);
+            }
+        });
     }
 });
