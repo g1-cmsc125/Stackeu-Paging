@@ -1,0 +1,71 @@
+body {
+    background-color: #F0EAB6;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0; 
+    padding: 40px;
+    width: max-content; /* Prevents long tables from wrapping */
+    min-width: 1000px;
+}
+
+.print-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.print-header p {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #6A6928;
+}
+
+.algo-section {
+    background-color: #f1f8e6;
+    padding: 25px; 
+    border-radius: 15px; 
+    border: 3px solid #cddba9;
+    margin-bottom: 30px;
+}
+
+.algo-section h2 {
+    color: #606844;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+/* Fast-rendering standard table */
+.export-table {
+    border-spacing: 4px;
+    width: 100%;
+    text-align: center;
+}
+
+.export-table th {
+    font-size: 1.3rem;
+    color: #6A6928;
+    padding-bottom: 8px;
+}
+
+.export-table td {
+    height: 40px;
+    min-width: 45px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.empty-cell { background-color: rgba(205, 219, 169, 0.3); }
+.filled-cell { background-color: #cdbf72; color: white; }
+.hit-cell { background-color: #5f7adb !important; color: white; }
+.miss-cell { background-color: #d8737f !important; color: white; }
+
+.hit-text { color: #5f7adb; font-weight: bold; font-size: 1.1rem; padding-top: 5px;}
+.miss-text { color: #d8737f; font-weight: bold; font-size: 1.1rem; padding-top: 5px;}
+
+.stats {
+    text-align: right;
+    color: #6A6928;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: 15px;
+    margin-bottom: 0;
+}

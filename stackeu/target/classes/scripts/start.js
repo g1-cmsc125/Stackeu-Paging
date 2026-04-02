@@ -357,17 +357,11 @@ class StartConfig {
     
     // Call Java AppBridge to switch the view
     if (window.javaApp) {
-        // FIX: Hand the data directly to Java so it survives the screen transition!
+        // Hand the data directly to Java so it survives the screen transition
         window.javaApp.saveConfig(JSON.stringify(this.config));
         
+        // Switch the view (JavaFX will now automatically trigger the simulation natively!)
         window.javaApp.navigate('simulate');
-        setTimeout(() => { 
-            try {
-                window.javaApp.triggerSimulation(); 
-            } catch (e) {
-                console.error("Java bridge execution error: ", e);
-            }
-        }, 100);
     } else {
         this.saveConfig(); // fallback for normal web browser testing
         window.location.href = 'simulate.html';

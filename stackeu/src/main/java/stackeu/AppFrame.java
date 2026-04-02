@@ -1,13 +1,12 @@
 package stackeu;
 
-import javafx.scene.image.WritableImage;
-import javafx.embed.swing.SwingFXUtils;
-import javax.imageio.ImageIO;
+import javafx.stage.FileChooser;
+import java.nio.file.Files;
+import java.util.Base64;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Logger;
-import javafx.scene.SnapshotParameters;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.scene.layout.StackPane;
@@ -23,16 +22,13 @@ public class AppFrame extends StackPane {
     public AppFrame(Stage stage) {
         bridge = new AppBridge(this);
 
-        // Preload all views into memory immediately
         homeView = createWebView("/index.html");
         hiwView = createWebView("/pages/how.html");
         startView = createWebView("/pages/start.html");
         simulateView = createWebView("/pages/simulate.html");
 
-        // Stack them all on top of each other
         this.getChildren().addAll(simulateView, startView, hiwView, homeView);
 
-        // Hide all except home by setting initial visibility
         homeView.setVisible(true);
         hiwView.setVisible(false);
         startView.setVisible(false);
@@ -42,7 +38,7 @@ public class AppFrame extends StackPane {
     private WebView createWebView(String path) {
         WebView webView = new WebView();
         webView.getEngine().setJavaScriptEnabled(true);
-        webView.setContextMenuEnabled(false); // Disable right-click for app feel
+        webView.setContextMenuEnabled(false); 
 
         webView.getEngine().getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
@@ -76,7 +72,11 @@ public class AppFrame extends StackPane {
                 case "home": homeView.setVisible(true); homeView.toFront(); break;
                 case "how": hiwView.setVisible(true); hiwView.toFront(); break;
                 case "start": startView.setVisible(true); startView.toFront(); break;
-                case "simulate": simulateView.setVisible(true); simulateView.toFront(); break;
+                case "simulate": 
+                    simulateView.setVisible(true); 
+                    simulateView.toFront(); 
+                    simulateView.getEngine().executeScript("try { if(typeof window.startSimulation === 'function') window.startSimulation(); } catch(e) {}");
+                    break;
             }
         });
     }
@@ -85,20 +85,58 @@ public class AppFrame extends StackPane {
         Platform.runLater(() -> simulateView.getEngine().executeScript(script));
     }
 
-    public void exportSimulationToImage() {
+    // --- Native Save As Dialog for Image ---
+    public void saveImageFromBase64(String base64) {
         Platform.runLater(() -> {
             try {
-                WritableImage snapshot = simulateView.snapshot(new SnapshotParameters(), null);
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Save Simulation Image");
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Files", "*.png"));
                 String timeStamp = new SimpleDateFormat("MMddyy_HHmmss").format(new Date());
-                File outputFile = new File(timeStamp + "_PG.png");
+                fileChooser.setInitialFileName(timeStamp + "_PG.png");
+
+                File file = fileChooser.showSaveDialog(simulateView.getScene().getWindow());
                 
-                ImageIO.write(SwingFXUtils.fromFXImage(snapshot, null), "png", outputFile);
-                
-                // Alert user that it worked
-                simulateView.getEngine().executeScript("alert('Saved successfully as: " + outputFile.getAbsolutePath().replace("\\", "\\\\") + "');");
+                if (file != null) {
+                    String base64Data = base64.substring(base64.indexOf(",") + 1);
+                    byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
+                    Files.write(file.toPath(), decodedBytes);
+                    
+                    simulateView.getEngine().executeScript("alert('Image saved successfully!'); typeof window.hideLoading === 'function' && window.hideLoading();");
+                } else {
+                    simulateView.getEngine().executeScript("typeof window.hideLoading === 'function' && window.hideLoading();");
+                }
             } catch (Exception e) {
                 e.printStackTrace();
-                simulateView.getEngine().executeScript("alert('Error saving image.');");
+                simulateView.getEngine().executeScript("alert('Error saving Image.'); typeof window.hideLoading === 'function' && window.hideLoading();");
+            }
+        });
+    }
+
+    // --- Native Save As Dialog for PDF ---
+    public void savePdfFromBase64(String base64) {
+        Platform.runLater(() -> {
+            try {
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Save Simulation PDF");
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
+                String timeStamp = new SimpleDateFormat("MMddyy_HHmmss").format(new Date());
+                fileChooser.setInitialFileName(timeStamp + "_PG.pdf");
+
+                File file = fileChooser.showSaveDialog(simulateView.getScene().getWindow());
+                
+                if (file != null) {
+                    String base64Data = base64.substring(base64.indexOf(",") + 1);
+                    byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
+                    Files.write(file.toPath(), decodedBytes);
+                    
+                    simulateView.getEngine().executeScript("alert('PDF saved successfully!'); typeof window.hideLoading === 'function' && window.hideLoading();");
+                } else {
+                    simulateView.getEngine().executeScript("typeof window.hideLoading === 'function' && window.hideLoading();");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                simulateView.getEngine().executeScript("alert('Error saving PDF.'); typeof window.hideLoading === 'function' && window.hideLoading();");
             }
         });
     }

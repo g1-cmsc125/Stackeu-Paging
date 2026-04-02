@@ -4,19 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STACK•EU - Simulation</title>
-    
     <link rel="stylesheet" href="../styles/index.css">
     <link rel="stylesheet" href="../styles/simulate.css"> 
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
     <script src="../scripts/simulate.js"></script>
 </head>
 <body>
-    
-    <main class="page-wrapper simulate-page" id="export-target">
-        
+    <main class="page-wrapper simulate-page">
         <header>
             <img src="../assets/logo.png" alt="StackEU Logo">
             <p class="section-label">Reference String</p>
@@ -24,23 +17,21 @@
         </header>
 
        <div class="action-buttons">
-            <a class="btn-action primary small-btn" style="cursor: pointer;" onclick="if(window.javaApp){javaApp.navigate('start'); return false;} else {window.location.href='start.html';}">Restart</a>
-            
-            <button id="exportImgBtn" class="btn-action export small-btn" style="cursor: pointer;">Save IMG</button>
-            <button id="exportPdfBtn" class="btn-action export small-btn" style="cursor: pointer; background-color: #c0392b;">Save PDF</button>
-            
-            <a href="../index.html" class="btn-action secondary small-btn" onclick="if(window.javaApp){javaApp.navigate('home'); return false;}">Main Menu</a>
+            <button id="restartBtn" class="btn-action primary small-btn">Restart</button>
+            <button id="exportImgBtn" class="btn-action export small-btn">Save IMG</button>
+            <button id="exportPdfBtn" class="btn-action export small-btn" style="background-color: #c0392b;">Save PDF</button>
+            <button id="mainMenuBtn" class="btn-action secondary small-btn">Main Menu</button>
         </div>
 
         <div id="exportLoadingOverlay" class="loading-overlay hidden">
             <div class="loading-modal">
                 <div class="spinner"></div>
                 <h3 id="loadingTitle">Processing Export...</h3>
-                <p>Please wait while we generate your file.</p>
+                <p>Generating optimized document. Please wait.</p>
             </div>
         </div>
-        
     </main>
 
+    <iframe id="exportFrame" src="export.html" style="display: none;"></iframe>
 </body>
 </html>

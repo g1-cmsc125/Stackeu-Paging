@@ -411,3 +411,67 @@
     0% { transform: rotate(0deg); } 
     100% { transform: rotate(360deg); } 
 }
+
+/* Persistent Hit/Miss colors that activate when a frame becomes visible */
+.step-visible.frame-miss {
+    background-color: #d8737f !important;
+    border-color: #d8737f !important;
+    color: white !important;
+}
+
+.step-visible.frame-hit {
+    background-color: #5f7adb !important;
+    border-color: #5f7adb !important;
+    color: white !important;
+}
+
+/* ========================================= */
+/* PRINT TEMPLATE STYLES (For Export Only)   */
+/* ========================================= */
+
+.print-template {
+    background-color: #F0EAB6; /* Match your app background */
+    padding: 60px;
+    width: max-content; /* Forces it to stretch infinitely, removing crops */
+    min-width: 1200px;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.print-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.print-card {
+    background-color: #f1f8e6;
+    padding: 30px;
+    border-radius: 20px;
+    border: 3px solid #cddba9;
+    margin-bottom: 30px;
+}
+
+.print-card h3 {
+    color: #606844;
+    font-size: 1.8rem;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.print-stat {
+    text-align: right;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #6A6928;
+    margin-top: 15px;
+}
+
+/* Force colors to print accurately */
+.print-template .frame-miss {
+    background-color: #d8737f !important;
+    color: white !important;
+}
+
+.print-template .frame-hit {
+    background-color: #5f7adb !important;
+    color: white !important;
+}
