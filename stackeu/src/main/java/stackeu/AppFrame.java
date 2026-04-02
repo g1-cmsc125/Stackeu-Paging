@@ -55,6 +55,10 @@ public class AppFrame extends StackPane {
             startView.setVisible(false);
             simulateView.setVisible(false);
 
+            if (viewName.equals("home")) {
+                startView.getEngine().executeScript("var btn = document.getElementById('clearInputBtn'); if(btn) btn.click();");
+            }
+
             switch (viewName) {
                 case "home": homeView.setVisible(true); homeView.toFront(); break;
                 case "how": hiwView.setVisible(true); hiwView.toFront(); break;
