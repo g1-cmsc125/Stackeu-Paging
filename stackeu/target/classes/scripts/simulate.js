@@ -12,24 +12,30 @@ class CacheSimulator {
     this.loadConfig();
     if (!this.config) return;
 
-    // Zero-lag initialization: Allows UI to render before heavy math
-    setTimeout(() => {
+    setTimeout(async () => {
       this.runAllSelected();
-      this.renderUI();
+      await this.renderUI(); 
       this.setupGlobalControls();
     }, 50); 
   }
 
   loadConfig() {
     try {
-      // Prioritize sessionStorage so old sessions clear when the app closes
-      const stored = sessionStorage.getItem('cacheSimulationConfig') || localStorage.getItem('cacheSimulationConfig');
-      if (stored) {
+      let stored = null;
+      if (window.javaApp) {
+          try { stored = window.javaApp.getConfig(); } catch(e) {}
+      } 
+      if (!stored || stored === "") {
+          stored = sessionStorage.getItem('cacheSimulationConfig') || localStorage.getItem('cacheSimulationConfig');
+      }
+
+      if (stored && stored !== "") {
         this.config = JSON.parse(stored);
         this.referenceString = this.config.referenceString.split(/\s+/).map(Number);
         this.frameSize = this.config.frameSize;
       } else {
-        window.location.href = '../index.html'; // Redirect if no config
+        if (window.javaApp) window.javaApp.navigate('start');
+        else window.location.href = '../index.html'; 
       }
     } catch (error) {
       console.error('Error loading config:', error);
@@ -38,36 +44,28 @@ class CacheSimulator {
 
   runAllSelected() {
     this.config.selectedAlgorithms.forEach(algoFullName => {
-      const algoKey = algoFullName.split(':')[0].trim().toUpperCase();
+      const key = algoFullName.toUpperCase();
       
-      switch (algoKey) {
-        case 'FIFO': this.results[algoFullName] = this.simulateFIFO(); break;
-        case 'LRU':  this.results[algoFullName] = this.simulateLRU(); break;
-        case 'LFU':  this.results[algoFullName] = this.simulateLFU(); break;
-        case 'OPT':  this.results[algoFullName] = this.simulateOPT(); break;
-        case 'MFU':  this.results[algoFullName] = this.simulateMFU(); break;
-        case 'SECOND CHANCE ALGORITHM': this.results[algoFullName] = this.simulateSecondChance(); break;
-        case 'ENHANCED SECOND CHANCE ALGORITHM': this.results[algoFullName] = this.simulateEnhancedSecondChance(); break;
-        default: console.warn(`Algorithm ${algoKey} logic not implemented yet.`);
-      }
+      if (key.indexOf('FIFO') !== -1) this.results[algoFullName] = this.simulateFIFO();
+      else if (key.indexOf('LRU') !== -1) this.results[algoFullName] = this.simulateLRU();
+      else if (key.indexOf('LFU') !== -1) this.results[algoFullName] = this.simulateLFU();
+      else if (key.indexOf('OPT') !== -1) this.results[algoFullName] = this.simulateOPT();
+      else if (key.indexOf('MFU') !== -1) this.results[algoFullName] = this.simulateMFU();
+      else if (key.indexOf('ENHANCED') !== -1) this.results[algoFullName] = this.simulateEnhancedSecondChance();
+      else if (key.indexOf('SECOND CHANCE') !== -1) this.results[algoFullName] = this.simulateSecondChance();
+      else console.warn(`Algorithm logic not found for: ${algoFullName}`);
     });
   }
 
-  createStepRecord(page, isHit, frames) {
-    return { page, isHit, frames: [...frames] };
-  }
+  createStepRecord(page, isHit, frames) { return { page, isHit, frames: [...frames] }; }
 
-  // ==========================================
-  // ALGORITHMS (Core Logic)
-  // ==========================================
-
+  // --- ALGORITHMS ---
   simulateFIFO() {
     let frames = [], history = [], hits = 0, faults = 0;
     for (let page of this.referenceString) {
       let isHit = frames.includes(page);
-      if (isHit) {
-        hits++;
-      } else {
+      if (isHit) hits++;
+      else {
         faults++;
         if (frames.length < this.frameSize) frames.push(page);
         else { frames.shift(); frames.push(page); }
@@ -108,9 +106,7 @@ class CacheSimulator {
       } else {
         faults++;
         if (frames.length < this.frameSize) {
-          frames.push(page);
-          frequencies.set(page, 1);
-          arrivalTimes.set(page, time);
+          frames.push(page); frequencies.set(page, 1); arrivalTimes.set(page, time);
         } else {
           let minFreq = Infinity, oldestTime = Infinity, lfuPage = -1;
           for (let p of frames) {
@@ -120,11 +116,8 @@ class CacheSimulator {
             }
           }
           frames = frames.filter(p => p !== lfuPage);
-          frequencies.delete(lfuPage);
-          arrivalTimes.delete(lfuPage);
-          frames.push(page);
-          frequencies.set(page, 1);
-          arrivalTimes.set(page, time);
+          frequencies.delete(lfuPage); arrivalTimes.delete(lfuPage);
+          frames.push(page); frequencies.set(page, 1); arrivalTimes.set(page, time);
         }
       }
       history.push(this.createStepRecord(page, isHit, frames));
@@ -137,9 +130,8 @@ class CacheSimulator {
     for (let i = 0; i < this.referenceString.length; i++) {
       let page = this.referenceString[i];
       let isHit = frames.includes(page);
-      if (isHit) {
-        hits++;
-      } else {
+      if (isHit) hits++;
+      else {
         faults++;
         if (frames.length < this.frameSize) frames.push(page);
         else {
@@ -164,16 +156,13 @@ class CacheSimulator {
     for (let page of this.referenceString) {
       time++;
       let isHit = frames.includes(page);
-      
       if (isHit) {
         hits++;
         frequencies.set(page, frequencies.get(page) + 1);
       } else {
         faults++;
         if (frames.length < this.frameSize) {
-          frames.push(page);
-          frequencies.set(page, 1);
-          arrivalTimes.set(page, time);
+          frames.push(page); frequencies.set(page, 1); arrivalTimes.set(page, time);
         } else {
           let maxFreq = -1, oldestTime = Infinity, mfuPage = -1;
           for (let p of frames) {
@@ -183,12 +172,8 @@ class CacheSimulator {
             }
           }
           frames = frames.filter(p => p !== mfuPage);
-          frequencies.delete(mfuPage);
-          arrivalTimes.delete(mfuPage);
-          
-          frames.push(page);
-          frequencies.set(page, 1);
-          arrivalTimes.set(page, time);
+          frequencies.delete(mfuPage); arrivalTimes.delete(mfuPage);
+          frames.push(page); frequencies.set(page, 1); arrivalTimes.set(page, time);
         }
       }
       history.push(this.createStepRecord(page, isHit, frames));
@@ -198,12 +183,10 @@ class CacheSimulator {
 
   simulateSecondChance() {
     let frames = [], history = [], hits = 0, faults = 0;
-    let refBits = []; 
-    let pointer = 0;  
+    let refBits = [], pointer = 0;  
 
     for (let page of this.referenceString) {
       let isHit = frames.includes(page);
-      
       if (isHit) {
         hits++;
         let index = frames.indexOf(page);
@@ -211,16 +194,14 @@ class CacheSimulator {
       } else {
         faults++;
         if (frames.length < this.frameSize) {
-          frames.push(page);
-          refBits.push(1); 
+          frames.push(page); refBits.push(1); 
         } else {
           while (true) {
             if (refBits[pointer] === 1) {
               refBits[pointer] = 0; 
               pointer = (pointer + 1) % this.frameSize; 
             } else {
-              frames[pointer] = page;
-              refBits[pointer] = 1; 
+              frames[pointer] = page; refBits[pointer] = 1; 
               pointer = (pointer + 1) % this.frameSize; 
               break;
             }
@@ -234,9 +215,7 @@ class CacheSimulator {
 
   simulateEnhancedSecondChance() {
     let frames = [], history = [], hits = 0, faults = 0;
-    let refBits = [];
-    let modBits = []; 
-    let pointer = 0;
+    let refBits = [], modBits = [], pointer = 0;
 
     for (let page of this.referenceString) {
       let isHit = frames.includes(page);
@@ -250,9 +229,7 @@ class CacheSimulator {
       } else {
         faults++;
         if (frames.length < this.frameSize) {
-          frames.push(page);
-          refBits.push(1);
-          modBits.push(isModified);
+          frames.push(page); refBits.push(1); modBits.push(isModified);
         } else {
           let replaced = false;
           while (!replaced) {
@@ -282,11 +259,15 @@ class CacheSimulator {
     return { history, hits, faults };
   }
 
-  // ==========================================
-  // UI RENDERING & ANIMATION
-  // ==========================================
+  scrollToActiveElement(containerElement, targetElement) {
+    if (containerElement && targetElement) {
+        const containerCenter = containerElement.clientWidth / 2;
+        const activeCellCenter = targetElement.offsetLeft + (targetElement.clientWidth / 2);
+        containerElement.scrollTo({ left: activeCellCenter - containerCenter, behavior: 'auto' });
+    }
+  }
 
-  renderUI() {
+  async renderUI() {
     const refStringHeader = document.querySelector('.reference-string');
     if (refStringHeader) refStringHeader.textContent = this.referenceString.join(', ');
 
@@ -296,12 +277,13 @@ class CacheSimulator {
     const actionButtons = document.querySelector('.action-buttons');
     const cols = this.referenceString.length;
 
-    Object.entries(this.results).forEach(([algoName, data]) => {
+    for (const [algoName, data] of Object.entries(this.results)) {
+      await new Promise(resolve => setTimeout(resolve, 15)); 
+
       const card = document.createElement('div');
       card.className = 'simulation-card';
 
       let gridHtml = `<div class="sim-grid" style="display: grid; grid-template-columns: repeat(${cols}, minmax(64px, 1fr));">`;
-
       data.history.forEach((step, idx) => {
         gridHtml += `<div class="num-cell step-hidden" data-col="${idx}">${step.page}</div>`;
       });
@@ -310,8 +292,10 @@ class CacheSimulator {
         data.history.forEach((step, idx) => {
           let val = step.frames[f];
           let isManipulated = step.frames[f] === step.page ? 'target-frame' : '';
+          let colorClass = (isManipulated && val !== undefined) ? (step.isHit ? 'frame-hit' : 'frame-miss') : '';
+
           if (val !== undefined) {
-            gridHtml += `<div class="frame filled step-hidden ${isManipulated}" data-col="${idx}">${val}</div>`;
+            gridHtml += `<div class="frame filled step-hidden ${isManipulated} ${colorClass}" data-col="${idx}">${val}</div>`;
           } else {
             gridHtml += `<div class="frame empty step-hidden" data-col="${idx}"></div>`;
           }
@@ -333,7 +317,7 @@ class CacheSimulator {
                 <h2 class="algo-name">${algoName}</h2>
             </div>
             <div class="controls">
-                <div class="sim-timer">⏱ <span class="time-sec">0.0</span>s</div>
+                <div class="sim-timer">⏱ <span class="time-sec">0.000</span>s</div>
                 <button class="btn-ctrl speed-toggle" title="Change Speed"><span>1x</span></button>
                 <button class="btn-ctrl pause"><span>▶</span></button>
                 <button class="btn-ctrl reset"><span>↺</span></button>
@@ -351,88 +335,66 @@ class CacheSimulator {
 
       mainWrapper.insertBefore(card, actionButtons);
       this.setupAnimator(card, cols);
-    });
+    }
   }
 
   setupAnimator(card, totalSteps) {
-    let currentStep = -1;
-    let isPlaying = false;
-    let intervalId = null;
-    let speedMs = 1000; 
-    let timeElapsed = 0.0; // Tracker for the timer
+    let currentStep = -1, isPlaying = false, intervalId = null, msTimerId = null;
+    let speedMs = 1000, timeElapsed = 0.0, lastTime = 0;
 
-    const btnPause = card.querySelector('.pause');
-    const btnReset = card.querySelector('.reset');
-    const btnSkip = card.querySelector('.skip');
-    const btnSpeed = card.querySelector('.speed-toggle');
-    const timeDisplay = card.querySelector('.time-sec');
+    const btnPause = card.querySelector('.pause'), btnReset = card.querySelector('.reset');
+    const btnSkip = card.querySelector('.skip'), btnSpeed = card.querySelector('.speed-toggle');
+    const timeDisplay = card.querySelector('.time-sec'), scrollContainer = card.querySelector('.sim-grid-container');
 
     const clearHighlights = () => {
-      card.querySelectorAll('.active-ref, .active-frame').forEach(el => {
-        el.classList.remove('active-ref', 'active-frame');
-      });
+      card.querySelectorAll('.active-ref, .active-frame').forEach(el => el.classList.remove('active-ref', 'active-frame'));
     };
 
     const showStep = (stepIndex) => {
-      if (stepIndex >= totalSteps) {
-        pauseAnim();
-        btnPause.innerHTML = '<span>↺</span>'; 
-        return;
-      }
+      if (stepIndex >= totalSteps) { pauseAnim(); btnPause.innerHTML = '<span>↺</span>'; return; }
       clearHighlights();
       const elements = card.querySelectorAll(`[data-col="${stepIndex}"]`);
       elements.forEach(el => {
-        el.classList.remove('step-hidden');
-        el.classList.add('step-visible');
+        el.classList.remove('step-hidden'); el.classList.add('step-visible');
         if (el.classList.contains('num-cell')) el.classList.add('active-ref');
         if (el.classList.contains('target-frame')) el.classList.add('active-frame');
       });
+      if (elements.length > 0) this.scrollToActiveElement(scrollContainer, elements[0]);
     };
 
     const playAnim = () => {
       if (currentStep >= totalSteps - 1) resetAnim(); 
-      isPlaying = true;
-      btnPause.innerHTML = '<span>❚❚</span>';
-      intervalId = setInterval(() => {
-        currentStep++;
-        timeElapsed += (speedMs / 1000); // Update timer mathematically
-        timeDisplay.textContent = timeElapsed.toFixed(1);
-        showStep(currentStep);
-      }, speedMs);
+      isPlaying = true; btnPause.innerHTML = '<span>❚❚</span>';
+      
+      lastTime = performance.now();
+      msTimerId = setInterval(() => {
+          const now = performance.now();
+          timeElapsed += (now - lastTime) / 1000;
+          lastTime = now;
+          timeDisplay.textContent = timeElapsed.toFixed(3); 
+      }, 16); 
+      intervalId = setInterval(() => { currentStep++; showStep(currentStep); }, speedMs);
     };
 
     const pauseAnim = () => {
-      isPlaying = false;
-      btnPause.innerHTML = '<span>▶</span>';
-      clearInterval(intervalId);
+      isPlaying = false; btnPause.innerHTML = '<span>▶</span>';
+      clearInterval(intervalId); clearInterval(msTimerId);
     };
 
     const resetAnim = () => {
-      pauseAnim();
-      currentStep = -1;
-      timeElapsed = 0.0;
-      timeDisplay.textContent = '0.0';
+      pauseAnim(); currentStep = -1; timeElapsed = 0.0; timeDisplay.textContent = '0.000';
       clearHighlights();
-      card.querySelectorAll('.step-visible').forEach(el => {
-        el.classList.remove('step-visible');
-        el.classList.add('step-hidden');
-      });
+      card.querySelectorAll('.step-visible').forEach(el => { el.classList.remove('step-visible'); el.classList.add('step-hidden'); });
+      scrollContainer.scrollTo({ left: 0, behavior: 'smooth' }); 
     };
 
     const skipToEnd = () => {
-      pauseAnim();
-      clearHighlights();
-      // Fast forward the timer mathematically based on remaining steps
-      let remaining = totalSteps - Math.max(0, currentStep);
-      timeElapsed += (remaining * (speedMs / 1000));
-      timeDisplay.textContent = timeElapsed.toFixed(1);
-
-      card.querySelectorAll('.step-hidden').forEach(el => {
-        el.classList.remove('step-hidden');
-        el.classList.add('step-visible');
-      });
-      currentStep = totalSteps;
-      btnPause.innerHTML = '<span>↺</span>';
+      pauseAnim(); clearHighlights();
+      timeElapsed += ((totalSteps - Math.max(0, currentStep)) * (speedMs / 1000));
+      timeDisplay.textContent = timeElapsed.toFixed(3);
+      card.querySelectorAll('.step-hidden').forEach(el => { el.classList.remove('step-hidden'); el.classList.add('step-visible'); });
+      currentStep = totalSteps; btnPause.innerHTML = '<span>↺</span>';
+      scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
     };
 
     btnPause.addEventListener('click', () => isPlaying ? pauseAnim() : playAnim());
@@ -450,119 +412,183 @@ class CacheSimulator {
   }
 
   setupGlobalControls() {
-    // Session Wipe Helper
     const clearSessionAndNavigate = (viewName, fallbackPath) => {
-        // Destroy the configuration from memory entirely
-        sessionStorage.removeItem('cacheSimulationConfig');
-        localStorage.removeItem('cacheSimulationConfig');
-        
-        if (window.javaApp) {
-            window.javaApp.navigate(viewName);
-        } else {
-            window.location.href = fallbackPath;
-        }
+        sessionStorage.removeItem('cacheSimulationConfig'); localStorage.removeItem('cacheSimulationConfig');
+        if (window.javaApp) { try { window.javaApp.saveConfig(""); } catch (e) {} window.javaApp.navigate(viewName); } 
+        else window.location.href = fallbackPath;
     };
-
-    // Replace the 'Restart' button click behavior completely
-    const restartBtn = document.querySelector('.btn-action.primary');
-    if (restartBtn) {
-      restartBtn.onclick = (e) => {
-          if (e) e.preventDefault();
-          clearSessionAndNavigate('start', 'start.html');
-      };
-    }
-
-    // Replace the 'Main Menu' button click behavior completely
-    const mainMenuBtn = document.querySelector('.btn-action.secondary');
-    if (mainMenuBtn) {
-      mainMenuBtn.onclick = (e) => {
-          if (e) e.preventDefault();
-          clearSessionAndNavigate('home', '../index.html');
-      };
-    }
+    const restartBtn = document.getElementById('restartBtn');
+    if (restartBtn) restartBtn.addEventListener('click', (e) => { e.preventDefault(); clearSessionAndNavigate('start', 'start.html'); });
+    const mainMenuBtn = document.getElementById('mainMenuBtn');
+    if (mainMenuBtn) mainMenuBtn.addEventListener('click', (e) => { e.preventDefault(); clearSessionAndNavigate('home', '../index.html'); });
   }
-} // <--- End of CacheSimulator Class
+} 
+
+// ==========================================
+// SUPER-FAST HIDDEN EXPORT LOGIC
+// ==========================================
+window.showLoading = (text) => {
+    const title = document.getElementById('loadingTitle');
+    const overlay = document.getElementById('exportLoadingOverlay');
+    if (title) title.innerText = text;
+    if (overlay) overlay.classList.remove('hidden');
+};
+
+window.hideLoading = () => {
+    const overlay = document.getElementById('exportLoadingOverlay');
+    if (overlay) overlay.classList.add('hidden');
+};
+
+// HELPER: Calculates perfect PDF dimensions, orientation, and centering
+function calculatePdfLayout(canvas) {
+    const ptWidth = canvas.width * 0.75;
+    const ptHeight = canvas.height * 0.75;
+    
+    // Standard A4 Landscape width is ~842 points
+    const MIN_PDF_WIDTH = 842; 
+    const pdfPageWidth = Math.max(ptWidth, MIN_PDF_WIDTH);
+    
+    // Dynamically calculate orientation (Landscape if wider than tall, Portrait if taller)
+    const orientation = pdfPageWidth > ptHeight ? 'l' : 'p';
+    
+    // Center the image if the table is smaller than the standard page width
+    const xOffset = (pdfPageWidth > ptWidth) ? (pdfPageWidth - ptWidth) / 2 : 0;
+
+    return { 
+        ptWidth, 
+        ptHeight, 
+        pdfPageWidth, 
+        orientation, 
+        xOffset 
+    };
+}
+
+async function triggerFastExport(format) {
+    window.showLoading(format === 'img' ? "Generating Image..." : "Generating PDF...");
+
+    // 1. Build a temporary off-screen container
+    const container = document.createElement('div');
+    container.id = 'temp-export-container';
+    container.style.position = 'absolute';
+    container.style.top = '-9999px';
+    container.style.left = '-9999px';
+    container.style.width = 'max-content'; 
+    container.style.minWidth = '1200px'; 
+    container.style.backgroundColor = '#F0EAB6';
+    container.style.padding = '40px';
+    container.style.color = '#606844';
+    container.style.fontFamily = "'Segoe UI', Arial, sans-serif";
+
+    let html = `
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="margin: 0; font-size: 2.5rem;">STACK•EU Results</h1>
+            <p style="font-size: 1.2rem; color: #6A6928; font-weight: bold;">Reference String: ${document.querySelector('.reference-string').textContent}</p>
+        </div>
+    `;
+
+    for(const [algo, data] of Object.entries(simInstance.results)) {
+        html += `<div style="background: #f1f8e6; padding: 30px; border-radius: 20px; border: 3px solid #cddba9; margin-bottom: 40px;">
+                    <h2 style="color: #606844; margin-top: 0;">${algo}</h2>
+                    <table style="width: 100%; border-collapse: separate; border-spacing: 4px; text-align: center;"><tr>`;
+
+        data.history.forEach(step => { html += `<th style="font-size: 1.3rem; color: #6A6928; padding-bottom: 10px;">${step.page}</th>`; });
+        html += `</tr>`;
+
+        let maxFrames = simInstance.frameSize;
+        for(let f=0; f < maxFrames; f++) {
+            html += `<tr>`;
+            data.history.forEach(step => {
+                let val = step.frames[f];
+                if(val !== undefined) {
+                    let isTarget = val === step.page;
+                    let bg = isTarget ? (step.isHit ? '#5f7adb' : '#d8737f') : '#cdbf72';
+                    let color = 'white';
+                    html += `<td style="height: 40px; min-width: 40px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; background-color: ${bg}; color: ${color};">${val}</td>`;
+                } else {
+                    html += `<td style="height: 40px; min-width: 40px; border-radius: 8px; background-color: rgba(205, 219, 169, 0.3);"></td>`;
+                }
+            });
+            html += `</tr>`;
+        }
+
+        html += `<tr>`;
+        data.history.forEach(step => {
+            let text = step.isHit ? 'Hit' : 'Miss';
+            let color = step.isHit ? '#5f7adb' : '#d8737f';
+            html += `<td style="font-size: 1.1rem; font-weight: bold; padding-top: 5px; color: ${color};">${text}</td>`;
+        });
+        html += `</tr></table>`;
+        html += `<div style="text-align: right; font-size: 1.2rem; color: #6A6928; font-weight: bold; margin-top: 15px;">Total Faults: ${data.faults} &nbsp;|&nbsp; Total Hits: ${data.hits}</div></div>`;
+    }
+
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    await new Promise(r => setTimeout(r, 100));
+
+    try {
+        const targetWidth = container.scrollWidth;
+        const targetHeight = container.scrollHeight;
+
+        const canvas = await html2canvas(container, {
+            scale: 1.5,
+            backgroundColor: '#F0EAB6',
+            logging: false,
+            width: targetWidth,
+            height: targetHeight,
+            windowWidth: targetWidth,
+            windowHeight: targetHeight
+        });
+
+        if (format === 'img') {
+            const base64Img = canvas.toDataURL('image/png');
+            if (window.javaApp) {
+                window.javaApp.saveImage(base64Img); 
+            } else {
+                const link = document.createElement('a');
+                link.download = "Simulation_Results.png";
+                link.href = base64Img;
+                link.click();
+                window.hideLoading();
+            }
+        } else {
+            // FIX: Using the new Helper Function for a much cleaner PDF generation block
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            
+            const layout = calculatePdfLayout(canvas);
+            
+            const customPdf = new jsPDF(layout.orientation, 'pt', [layout.pdfPageWidth, layout.ptHeight]);
+            customPdf.addImage(imgData, 'PNG', layout.xOffset, 0, layout.ptWidth, layout.ptHeight);
+            
+            const base64Pdf = customPdf.output('datauristring');
+
+            if (window.javaApp) {
+                window.javaApp.savePdf(base64Pdf); 
+            } else {
+                customPdf.save("Simulation_Results.pdf");
+                window.hideLoading();
+            }
+        }
+    } catch (err) {
+        console.error("Export failed:", err);
+        alert("Failed to export.");
+        window.hideLoading();
+    } finally {
+        document.body.removeChild(container);
+    }
+}
+
+let simInstance = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    const sim = new CacheSimulator();
+    simInstance = new CacheSimulator();
+    window.startSimulation = () => { simInstance.init(); };
+    if (!window.javaApp) setTimeout(() => simInstance.init(), 50);
 
-    window.startSimulation = () => { sim.init(); };
-
-    if (!window.javaApp) {
-        setTimeout(() => sim.init(), 50);
-    }
-
-    // Export Elements
     const exportImgBtn = document.getElementById('exportImgBtn');
+    if (exportImgBtn) exportImgBtn.addEventListener('click', () => triggerFastExport('img'));
+
     const exportPdfBtn = document.getElementById('exportPdfBtn');
-    const target = document.getElementById('export-target');
-    
-    // Popup Elements
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const loadingText = document.getElementById('loadingText');
-
-    const getFileName = (extension) => {
-      const now = new Date();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      const yy = String(now.getFullYear()).slice(-2);
-      const hh = String(now.getHours()).padStart(2, '0');
-      const min = String(now.getMinutes()).padStart(2, '0');
-      const ss = String(now.getSeconds()).padStart(2, '0');
-      return `${mm}${dd}${yy}_${hh}${min}${ss}_PG.${extension}`;
-    };
-
-    const prepareCapture = () => {
-      document.querySelectorAll('.step-hidden').forEach(el => el.classList.remove('step-hidden'));
-      document.querySelectorAll('.active-ref, .active-frame').forEach(el => el.classList.remove('active-ref', 'active-frame'));
-      target.style.overflowX = 'visible'; 
-    };
-
-    const showLoading = (text) => {
-        if (loadingText) loadingText.textContent = text;
-        if (loadingOverlay) loadingOverlay.classList.add('active');
-    };
-
-    const hideLoading = () => {
-        if (loadingOverlay) loadingOverlay.classList.remove('active');
-        target.style.overflowX = 'auto'; // Restore scroll
-    };
-
-    if (exportImgBtn) {
-      exportImgBtn.addEventListener('click', () => {
-        showLoading('Generating Image...');
-        
-        // Wait 50ms so the UI can paint the popup BEFORE html2canvas freezes the browser
-        setTimeout(() => {
-            prepareCapture();
-            html2canvas(target, { backgroundColor: '#F0EAB6', scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = getFileName('png');
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                hideLoading();
-            });
-        }, 50);
-      });
-    }
-
-    if (exportPdfBtn) {
-      exportPdfBtn.addEventListener('click', () => {
-        showLoading('Generating PDF...');
-        
-        setTimeout(() => {
-            prepareCapture();
-            html2canvas(target, { backgroundColor: '#F0EAB6', scale: 2 }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('l', 'mm', 'a4'); 
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save(getFileName('pdf'));
-                hideLoading();
-            });
-        }, 50);
-      });
-    }
+    if (exportPdfBtn) exportPdfBtn.addEventListener('click', () => triggerFastExport('pdf'));
 });

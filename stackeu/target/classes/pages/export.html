@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Export Template</title>
+    <link rel="stylesheet" href="../styles/export.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div id="export-wrapper">
+        <div class="print-header">
+            <img src="../assets/logo.png" alt="StackEU" style="height: 50px; margin-bottom: 10px;">
+            <h1 style="color: #606844; margin: 0;">Simulation Results</h1>
+            <p>Reference String: <span id="refStrOut"></span></p>
+        </div>
+        <div id="tables-container"></div>
+    </div>
+
+    <script>
+        // Listens for data coming from the main simulation page
+        window.addEventListener('message', async (event) => {
+            if(event.data.type === 'GENERATE_EXPORT') {
+                const data = event.data.payload;
+                document.getElementById('refStrOut').textContent = data.refString;
+                
+                let html = '';
+                for(const [algo, result] of Object.entries(data.results)) {
+                    html += `<div class="algo-section"><h2>${algo}</h2><table class="export-table"><tr>`;
+                    
+                    // Top Row: Reference String
+                    result.history.forEach(step => { html += `<th>${step.page}</th>`; });
+                    html += `</tr>`;
+                    
+                    // Middle Rows: Frames
+                    for(let f = 0; f < data.frameSize; f++) {
+                        html += `<tr>`;
+                        result.history.forEach(step => {
+                            let val = step.frames[f] !== undefined ? step.frames[f] : '';
+                            let cls = 'empty-cell';
+                            if(val !== '') {
+                                cls = 'filled-cell';
+                                if(val === step.page) cls = step.isHit ? 'hit-cell' : 'miss-cell';
+                            }
+                            html += `<td class="${cls}">${val}</td>`;
+                        });
+                        html += `</tr>`;
+                    }
+                    
+                    // Bottom Row: Hit/Miss Legend
+                    html += `<tr>`;
+                    result.history.forEach(step => {
+                        let text = step.isHit ? 'Hit' : 'Miss';
+                        let cls = step.isHit ? 'hit-text' : 'miss-text';
+                        html += `<td class="${cls}">${text}</td>`;
+                    });
+                    html += `</tr></table>`;
+                    html += `<p class="stats">Faults: ${result.faults} &nbsp;|&nbsp; Hits: ${result.hits}</p></div>`;
+                }
+                
+                document.getElementById('tables-container').innerHTML = html;
+                
+                // Allow table to paint before snapping picture (reduced to 50ms for speed)
+                await new Promise(r => setTimeout(r, 50));
+                
+                const target = document.getElementById('export-wrapper');
+                
+                // FIX: Extreme optimizations applied here. Scale 1.0 removes the lag!
+                const canvas = await html2canvas(target, { 
+                    scale: 1.0, 
+                    backgroundColor: '#F0EAB6', 
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true
+                });
+                
+                if(event.data.format === 'img') {
+                    window.parent.postMessage({ type: 'EXPORT_READY', format: 'img', base64: canvas.toDataURL('image/png') }, '*');
+                } else {
+                    const imgData = canvas.toDataURL('image/png');
+                    const { jsPDF } = window.jspdf;
+                    const ptWidth = canvas.width * 0.75;
+                    const ptHeight = canvas.height * 0.75;
+                    const pdf = new jsPDF('p', 'pt', [ptWidth, ptHeight]);
+                    pdf.addImage(imgData, 'PNG', 0, 0, ptWidth, ptHeight);
+                    window.parent.postMessage({ type: 'EXPORT_READY', format: 'pdf', base64: pdf.output('datauristring') }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

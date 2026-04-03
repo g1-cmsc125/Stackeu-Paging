@@ -14,9 +14,7 @@
     <script src="../scripts/simulate.js"></script>
 </head>
 <body>
-    
-    <main class="page-wrapper simulate-page" id="export-target">
-        
+    <main class="page-wrapper simulate-page">
         <header>
             <img src="../assets/logo.png" alt="StackEU Logo">
             <p class="section-label">Reference String</p>
@@ -24,23 +22,19 @@
         </header>
 
        <div class="action-buttons">
-            <a class="btn-action primary small-btn" style="cursor: pointer;" onclick="if(window.javaApp){javaApp.navigate('start'); return false;} else {window.location.href='start.html';}">Restart</a>
-            
-            <button id="exportImgBtn" class="btn-action export small-btn" style="cursor: pointer;">Save IMG</button>
-            <button id="exportPdfBtn" class="btn-action export small-btn" style="cursor: pointer; background-color: #c0392b;">Save PDF</button>
-            
-            <a href="../index.html" class="btn-action secondary small-btn" onclick="if(window.javaApp){javaApp.navigate('home'); return false;}">Main Menu</a>
+            <button id="restartBtn" class="btn-action primary small-btn">Restart</button>
+            <button id="exportImgBtn" class="btn-action export small-btn">Save IMG</button>
+            <button id="exportPdfBtn" class="btn-action export small-btn" style="background-color: #c0392b;">Save PDF</button>
+            <button id="mainMenuBtn" class="btn-action secondary small-btn">Main Menu</button>
         </div>
 
-        <div id="loadingOverlay" class="loading-overlay">
-            <div class="loader-content">
+        <div id="exportLoadingOverlay" class="loading-overlay hidden">
+            <div class="loading-modal">
                 <div class="spinner"></div>
-                <h2 id="loadingText" style="color: var(--text-color); margin: 0;">Processing...</h2>
-                <p style="color: var(--text-olive); margin: 0;">Please wait while we generate your file.</p>
+                <h3 id="loadingTitle">Processing Export...</h3>
+                <p>Compiling Document...</p>
             </div>
         </div>
-        
     </main>
-
 </body>
 </html>

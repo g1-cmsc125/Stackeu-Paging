@@ -266,24 +266,35 @@ class StartConfig {
   }
 
   /**
-   * Clear all input fields
+   * Clear all input fields and algorithm selections
    */
   clearAllInput() {
     const referenceInput = document.getElementById('referenceString');
     const frameSizeInput = document.getElementById('frameSize');
 
+    // 1. Clear text inputs
     if (referenceInput) referenceInput.value = '';
     if (frameSizeInput) frameSizeInput.value = '';
 
+    // 2. Clear all error messages
     this.showError('referenceError', '');
     this.showError('frameSizeError', '');
     this.showError('generalError', '');
 
+    // 3. Clear data from configuration
     this.config.referenceString = '';
     this.config.frameSize = '';
+    
+    // FIX: Clear algorithm array and remove visual selection classes
+    this.config.selectedAlgorithms = [];
+    const algoItems = document.querySelectorAll('.algo-item');
+    algoItems.forEach(item => {
+        item.classList.remove('selected');
+    });
+
+    // 4. Save the empty state
     this.saveConfig();
   }
-
   /**
    * Toggle algorithm selection
    * Reads from data-algo attribute to avoid capturing nested element text
@@ -315,7 +326,6 @@ class StartConfig {
   proceedToSimulation() {
     this.showError('generalError', '');
     
-    // 1. Get the values
     const refInput = document.getElementById('referenceString');
     const frameInput = document.getElementById('frameSize');
     
@@ -325,9 +335,14 @@ class StartConfig {
     const frameSizeVal = parseInt(frameInput.value);
     const algosSelected = this.config.selectedAlgorithms.length > 0;
 
-    // 2. Validate everything before switching
-    if (!refStr || isNaN(frameSizeVal) || frameSizeVal < 3 || frameSizeVal > 10) {
-      this.showError('generalError', 'Please fix the input errors before simulating.');
+    const tokens = refStr.split(/\s+/).filter(t => t !== '');
+    if (tokens.length < 10 || tokens.length > 40) {
+      this.showError('generalError', 'Reference string must have between 10 and 40 numbers.');
+      return;
+    }
+
+    if (isNaN(frameSizeVal) || frameSizeVal < 3 || frameSizeVal > 10) {
+      this.showError('generalError', 'Frame size must be between 3 and 10.');
       return;
     }
 
@@ -336,24 +351,19 @@ class StartConfig {
       return;
     }
 
-    // 3. Save the valid configuration
+    // Save the valid configuration
     this.config.referenceString = refStr;
     this.config.frameSize = frameSizeVal;
-    this.saveConfig();
-
-    // 4. CALL APPBRIDGE TO SWITCH THE VIEW
+    
+    // Call Java AppBridge to switch the view
     if (window.javaApp) {
-        // Calls the Java method we just uncommented
-        window.javaApp.navigate('simulate');
+        // Hand the data directly to Java so it survives the screen transition
+        window.javaApp.saveConfig(JSON.stringify(this.config));
         
-        // Wait 50ms for the screen to switch, then trigger the math
-        setTimeout(() => { 
-            if(typeof window.javaApp.triggerSimulation === 'function') {
-                window.javaApp.triggerSimulation(); 
-            }
-        }, 50);
+        // Switch the view (JavaFX will now automatically trigger the simulation natively!)
+        window.javaApp.navigate('simulate');
     } else {
-        // Fallback if running in a standard web browser (like Chrome)
+        this.saveConfig(); // fallback for normal web browser testing
         window.location.href = 'simulate.html';
     }
   }

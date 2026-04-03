@@ -32,9 +32,9 @@
                 </div>
 
                 <div class="action-buttons">
-                    <button id="randomizeBtn" class="btn-secondary">Randomize</button>
-                    <button id="uploadBtn" class="btn-secondary">Upload</button>
-                    <button id="clearInputBtn" class="btn-secondary">Clear input</button>
+                    <button type="button" id="randomizeBtn" class="btn-secondary">Randomize</button>
+                    <button type="button" id="uploadBtn" class="btn-secondary">Upload</button>
+                    <button type="button" id="clearInputBtn" class="btn-secondary">Clear input</button>
                 </div>
                 <input type="file" id="fileUpload" accept=".txt" style="display: none;">
             </section>
@@ -44,13 +44,13 @@
                 <p class="sub-label">You can choose 1 or more algorithm to simulate</p>
                 
                 <div class="algo-list">
-                    <div class="algo-item selected">FIFO: First-In, First-Out</div>
-                    <div class="algo-item">LRU: Least Recently Used</div>
-                    <div class="algo-item">OPT: Optimal Page Replacement</div>
-                    <div class="algo-item">LFU: Least Frequently Used</div>
-                    <div class="algo-item">MFU: Most Frequently Used</div>
-                    <div class="algo-item">Second Chance Algorithm</div>
-                    <div class="algo-item">Enhanced Second Chance Algorithm</div>
+                    <div class="algo-item" data-algo="FIFO: First-In, First-Out">FIFO: First-In, First-Out</div>
+                    <div class="algo-item" data-algo="LRU: Least Recently Used">LRU: Least Recently Used</div>
+                    <div class="algo-item" data-algo="OPT: Optimal Page Replacement">OPT: Optimal Page Replacement</div>
+                    <div class="algo-item" data-algo="LFU: Least Frequently Used">LFU: Least Frequently Used</div>
+                    <div class="algo-item" data-algo="MFU: Most Frequently Used">MFU: Most Frequently Used</div>
+                    <div class="algo-item" data-algo="Second Chance Algorithm">Second Chance Algorithm</div>
+                    <div class="algo-item" data-algo="Enhanced Second Chance Algorithm">Enhanced Second Chance Algorithm</div>
                 </div>
             </section>
         </main>
@@ -65,7 +65,7 @@
                    Main Menu
                 </a>
                 
-                <button id="simulateBtn" class="btn-simulate">Simulate</button>
+                <button type="button" id="simulateBtn" class="btn-simulate">Simulate</button>
             </div>
         </footer>
     </div>
