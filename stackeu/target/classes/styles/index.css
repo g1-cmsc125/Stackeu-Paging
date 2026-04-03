@@ -185,3 +185,83 @@ header {
 header img {
     width: 75px;
 }
+
+/* ========================================= */
+/* SPLASH SCREEN ANIMATIONS                  */
+/* ========================================= */
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--bg-color); /* Matches your olive/mustard aesthetic */
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
+}
+
+.splash-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: pulse-zoom 2s infinite ease-in-out;
+}
+
+.splash-logo {
+    width: 180px;
+    margin-bottom: 15px;
+    filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.15));
+}
+
+.splash-text {
+    font-size: 3.5rem;
+    color: var(--text-color);
+    margin: 0 0 25px 0;
+    font-weight: 800;
+    letter-spacing: 3px;
+}
+
+.splash-text span {
+    color: var(--green-main); /* Olive bullet point */
+}
+
+/* Custom Loading Bar */
+.loading-bar {
+    width: 250px;
+    height: 8px;
+    background-color: var(--green-pale);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress {
+    width: 0%;
+    height: 100%;
+    background-color: var(--green-main);
+    border-radius: 10px;
+    animation: load-progress 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Keyframes */
+@keyframes pulse-zoom {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+@keyframes load-progress {
+    0% { width: 0%; }
+    40% { width: 60%; }
+    80% { width: 85%; }
+    100% { width: 100%; }
+}
+
+/* Triggered by JavaScript to hide the overlay */
+#splash-screen.fade-out {
+    opacity: 0;
+    visibility: hidden;
+}
