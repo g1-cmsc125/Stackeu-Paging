@@ -22,7 +22,7 @@ When the simulator launches, choose how to provide your reference string and mem
 | Mode | Description |
 | :--- | :--- |
 | **Random** | The simulator auto-generates a random reference string and frame size. |
-| **Manual Input** | Enter your reference string and frame size directly through the on-screen input panel. |
+| **Manual Input** | Enter your reference string and frame size directly through the on-screen input panel. Use space as delimiter. |
 | **Text File** | Load data from a `.txt` file formatted to the simulator's specification (Line 1: `frames:X`, Line 2: `reference string`). |
 
 **Valid input ranges:**
@@ -68,8 +68,8 @@ No Maven installation needed. The wrapper downloads everything automatically.
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/g1-cmsc125/QuantumTick.git
-   cd QuantumTick/quantum-tick
+   git clone https://github.com/g1-cmsc125/Stackeu-Paging.git
+   cd Stackeu-Paging/stackeu
    ```
 2. Run the build command using the wrapper:
    * **Windows:**
