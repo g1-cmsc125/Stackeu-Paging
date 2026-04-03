@@ -33,7 +33,7 @@
                     html += `</tr>`;
                     
                     // Middle Rows: Frames
-                    for(let f=0; f < data.frameSize; f++) {
+                    for(let f = 0; f < data.frameSize; f++) {
                         html += `<tr>`;
                         result.history.forEach(step => {
                             let val = step.frames[f] !== undefined ? step.frames[f] : '';
@@ -60,11 +60,19 @@
                 
                 document.getElementById('tables-container').innerHTML = html;
                 
-                // Allow table to paint before snapping picture
-                await new Promise(r => setTimeout(r, 100));
+                // Allow table to paint before snapping picture (reduced to 50ms for speed)
+                await new Promise(r => setTimeout(r, 50));
                 
                 const target = document.getElementById('export-wrapper');
-                const canvas = await html2canvas(target, { scale: 1.5, backgroundColor: '#F0EAB6', logging: false });
+                
+                // FIX: Extreme optimizations applied here. Scale 1.0 removes the lag!
+                const canvas = await html2canvas(target, { 
+                    scale: 1.0, 
+                    backgroundColor: '#F0EAB6', 
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true
+                });
                 
                 if(event.data.format === 'img') {
                     window.parent.postMessage({ type: 'EXPORT_READY', format: 'img', base64: canvas.toDataURL('image/png') }, '*');
