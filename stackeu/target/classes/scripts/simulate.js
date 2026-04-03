@@ -15,7 +15,7 @@ class CacheSimulator {
     setTimeout(async () => {
       this.runAllSelected();
       await this.renderUI(); 
-      this.setupGlobalControls();
+      // this.setupGlobalControls();
     }, 50); 
   }
 
@@ -59,16 +59,24 @@ class CacheSimulator {
 
   createStepRecord(page, isHit, frames) { return { page, isHit, frames: [...frames] }; }
 
-  // --- ALGORITHMS ---
+  // ==========================================
+  // CORE ALGORITHMS (Updated & In-Place)
+  // ==========================================
+
   simulateFIFO() {
     let frames = [], history = [], hits = 0, faults = 0;
+    let pointer = 0;
     for (let page of this.referenceString) {
       let isHit = frames.includes(page);
       if (isHit) hits++;
       else {
         faults++;
-        if (frames.length < this.frameSize) frames.push(page);
-        else { frames.shift(); frames.push(page); }
+        if (frames.length < this.frameSize) {
+          frames.push(page);
+        } else {
+          frames[pointer] = page; // In-place replacement
+          pointer = (pointer + 1) % this.frameSize;
+        }
       }
       history.push(this.createStepRecord(page, isHit, frames));
     }
@@ -77,16 +85,29 @@ class CacheSimulator {
 
   simulateLRU() {
     let frames = [], history = [], hits = 0, faults = 0;
+    let lastUsed = new Map(), time = 0;
     for (let page of this.referenceString) {
+      time++;
       let isHit = frames.includes(page);
       if (isHit) {
         hits++;
-        frames = frames.filter(p => p !== page);
-        frames.push(page);
+        lastUsed.set(page, time);
       } else {
         faults++;
-        if (frames.length < this.frameSize) frames.push(page);
-        else { frames.shift(); frames.push(page); }
+        if (frames.length < this.frameSize) {
+          frames.push(page);
+          lastUsed.set(page, time);
+        } else {
+          let lruPage = -1, oldestTime = Infinity, lruIndex = -1;
+          for (let i = 0; i < frames.length; i++) {
+            let p = frames[i];
+            let lu = lastUsed.get(p);
+            if (lu < oldestTime) { oldestTime = lu; lruPage = p; lruIndex = i; }
+          }
+          frames[lruIndex] = page; // In-place visual replacement
+          lastUsed.delete(lruPage);
+          lastUsed.set(page, time);
+        }
       }
       history.push(this.createStepRecord(page, isHit, frames));
     }
@@ -96,7 +117,6 @@ class CacheSimulator {
   simulateLFU() {
     let frames = [], history = [], hits = 0, faults = 0;
     let frequencies = new Map(), arrivalTimes = new Map(), time = 0;
-
     for (let page of this.referenceString) {
       time++;
       let isHit = frames.includes(page);
@@ -106,18 +126,24 @@ class CacheSimulator {
       } else {
         faults++;
         if (frames.length < this.frameSize) {
-          frames.push(page); frequencies.set(page, 1); arrivalTimes.set(page, time);
+          frames.push(page);
+          frequencies.set(page, 1);
+          arrivalTimes.set(page, time);
         } else {
-          let minFreq = Infinity, oldestTime = Infinity, lfuPage = -1;
-          for (let p of frames) {
+          let minFreq = Infinity, oldestTime = Infinity, lfuIndex = -1, lfuPage = -1;
+          for (let i = 0; i < frames.length; i++) {
+            let p = frames[i];
             let freq = frequencies.get(p), arrTime = arrivalTimes.get(p);
+            // Replace lowest frequency (Tie-breaker: Oldest Arrival)
             if (freq < minFreq || (freq === minFreq && arrTime < oldestTime)) {
-              minFreq = freq; oldestTime = arrTime; lfuPage = p;
+              minFreq = freq; oldestTime = arrTime; lfuIndex = i; lfuPage = p;
             }
           }
-          frames = frames.filter(p => p !== lfuPage);
-          frequencies.delete(lfuPage); arrivalTimes.delete(lfuPage);
-          frames.push(page); frequencies.set(page, 1); arrivalTimes.set(page, time);
+          frames[lfuIndex] = page;
+          frequencies.delete(lfuPage);
+          arrivalTimes.delete(lfuPage);
+          frequencies.set(page, 1);
+          arrivalTimes.set(page, time);
         }
       }
       history.push(this.createStepRecord(page, isHit, frames));
@@ -133,15 +159,16 @@ class CacheSimulator {
       if (isHit) hits++;
       else {
         faults++;
-        if (frames.length < this.frameSize) frames.push(page);
-        else {
+        if (frames.length < this.frameSize) {
+            frames.push(page);
+        } else {
           let furthestUse = -1, optVictimIndex = -1;
           for (let j = 0; j < frames.length; j++) {
             let nextUse = this.referenceString.indexOf(frames[j], i + 1);
             if (nextUse === -1) { optVictimIndex = j; break; }
             if (nextUse > furthestUse) { furthestUse = nextUse; optVictimIndex = j; }
           }
-          frames.splice(optVictimIndex, 1, page); 
+          frames[optVictimIndex] = page; 
         }
       }
       history.push(this.createStepRecord(page, isHit, frames));
@@ -152,7 +179,6 @@ class CacheSimulator {
   simulateMFU() {
     let frames = [], history = [], hits = 0, faults = 0;
     let frequencies = new Map(), arrivalTimes = new Map(), time = 0;
-
     for (let page of this.referenceString) {
       time++;
       let isHit = frames.includes(page);
@@ -162,18 +188,24 @@ class CacheSimulator {
       } else {
         faults++;
         if (frames.length < this.frameSize) {
-          frames.push(page); frequencies.set(page, 1); arrivalTimes.set(page, time);
+          frames.push(page);
+          frequencies.set(page, 1);
+          arrivalTimes.set(page, time);
         } else {
-          let maxFreq = -1, oldestTime = Infinity, mfuPage = -1;
-          for (let p of frames) {
+          let maxFreq = -1, oldestTime = Infinity, mfuIndex = -1, mfuPage = -1;
+          for (let i = 0; i < frames.length; i++) {
+            let p = frames[i];
             let freq = frequencies.get(p), arrTime = arrivalTimes.get(p);
+            // Replace highest frequency (Tie-breaker: Oldest Arrival)
             if (freq > maxFreq || (freq === maxFreq && arrTime < oldestTime)) {
-              maxFreq = freq; oldestTime = arrTime; mfuPage = p;
+              maxFreq = freq; oldestTime = arrTime; mfuIndex = i; mfuPage = p;
             }
           }
-          frames = frames.filter(p => p !== mfuPage);
-          frequencies.delete(mfuPage); arrivalTimes.delete(mfuPage);
-          frames.push(page); frequencies.set(page, 1); arrivalTimes.set(page, time);
+          frames[mfuIndex] = page;
+          frequencies.delete(mfuPage);
+          arrivalTimes.delete(mfuPage);
+          frequencies.set(page, 1);
+          arrivalTimes.set(page, time);
         }
       }
       history.push(this.createStepRecord(page, isHit, frames));
@@ -183,27 +215,34 @@ class CacheSimulator {
 
   simulateSecondChance() {
     let frames = [], history = [], hits = 0, faults = 0;
-    let refBits = [], pointer = 0;  
-
+    let refBits = new Map(), fifoQueue = [];  
+    
     for (let page of this.referenceString) {
       let isHit = frames.includes(page);
       if (isHit) {
         hits++;
-        let index = frames.indexOf(page);
-        refBits[index] = 1; 
+        refBits.set(page, 1); // Set to 1 on reference
       } else {
         faults++;
         if (frames.length < this.frameSize) {
-          frames.push(page); refBits.push(1); 
+          frames.push(page);
+          fifoQueue.push(page);
+          refBits.set(page, 0); // Start with 0 so it gets replaced if not referenced again
         } else {
           while (true) {
-            if (refBits[pointer] === 1) {
-              refBits[pointer] = 0; 
-              pointer = (pointer + 1) % this.frameSize; 
-            } else {
-              frames[pointer] = page; refBits[pointer] = 1; 
-              pointer = (pointer + 1) % this.frameSize; 
+            let candidate = fifoQueue.shift(); // Inspect oldest page
+            if (refBits.get(candidate) === 0) {
+              // Found victim
+              let frameIdx = frames.indexOf(candidate);
+              frames[frameIdx] = page;
+              fifoQueue.push(page);
+              refBits.delete(candidate);
+              refBits.set(page, 0); 
               break;
+            } else {
+              // Give second chance
+              refBits.set(candidate, 0); 
+              fifoQueue.push(candidate);
             }
           }
         }
@@ -215,43 +254,52 @@ class CacheSimulator {
 
   simulateEnhancedSecondChance() {
     let frames = [], history = [], hits = 0, faults = 0;
-    let refBits = [], modBits = [], pointer = 0;
-
+    let refBits = new Map(), modBits = new Map(), loadOrder = [];
+    
     for (let page of this.referenceString) {
       let isHit = frames.includes(page);
+      // Simulated modify bit (even pages = modified)
       let isModified = (page % 2 === 0) ? 1 : 0; 
 
       if (isHit) {
         hits++;
-        let index = frames.indexOf(page);
-        refBits[index] = 1; 
-        if (isModified) modBits[index] = 1; 
+        refBits.set(page, 1); 
+        if (isModified) modBits.set(page, 1); 
       } else {
         faults++;
         if (frames.length < this.frameSize) {
-          frames.push(page); refBits.push(1); modBits.push(isModified);
+          frames.push(page);
+          loadOrder.push(page);
+          refBits.set(page, 1); 
+          modBits.set(page, isModified);
         } else {
-          let replaced = false;
-          while (!replaced) {
-            for (let i = 0; i < this.frameSize; i++) {
-              let p = (pointer + i) % this.frameSize;
-              if (refBits[p] === 0 && modBits[p] === 0) {
-                frames[p] = page; refBits[p] = 1; modBits[p] = isModified;
-                pointer = (p + 1) % this.frameSize; replaced = true; break;
-              }
+          let bestClass = 4, victimPage = -1;
+          
+          // Categorize into four classes: (r << 1) | m gives 0, 1, 2, or 3
+          for (let candidate of loadOrder) {
+            let r = refBits.get(candidate) || 0;
+            let m = modBits.get(candidate) || 0;
+            let c = (r << 1) | m; 
+            
+            // Find lowest non-empty class
+            if (c < bestClass) {
+              bestClass = c;
+              victimPage = candidate;
+              if (bestClass === 0) break; // Found absolute best victim
             }
-            if (replaced) break;
-
-            for (let i = 0; i < this.frameSize; i++) {
-              let p = (pointer + i) % this.frameSize;
-              if (refBits[p] === 0 && modBits[p] === 1) {
-                frames[p] = page; refBits[p] = 1; modBits[p] = isModified;
-                pointer = (p + 1) % this.frameSize; replaced = true; break;
-              }
-              refBits[p] = 0; 
-            }
-            if (replaced) break;
           }
+
+          let frameIdx = frames.indexOf(victimPage);
+          frames[frameIdx] = page;
+          
+          loadOrder = loadOrder.filter(p => p !== victimPage);
+          loadOrder.push(page);
+
+          refBits.delete(victimPage);
+          modBits.delete(victimPage);
+          
+          refBits.set(page, 1); 
+          modBits.set(page, isModified);
         }
       }
       history.push(this.createStepRecord(page, isHit, frames));
@@ -413,15 +461,29 @@ class CacheSimulator {
 
   setupGlobalControls() {
     const clearSessionAndNavigate = (viewName, fallbackPath) => {
-        sessionStorage.removeItem('cacheSimulationConfig'); localStorage.removeItem('cacheSimulationConfig');
-        if (window.javaApp) { try { window.javaApp.saveConfig(""); } catch (e) {} window.javaApp.navigate(viewName); } 
-        else window.location.href = fallbackPath;
+        try { sessionStorage.removeItem('cacheSimulationConfig'); } catch(e) {}
+        try { localStorage.removeItem('cacheSimulationConfig'); } catch(e) {}
+
+        if (window.javaApp) {
+            try { window.javaApp.saveConfig(""); } catch(e) {}  // ← isolated
+            try { window.javaApp.navigate(viewName); } catch(e) {} // ← always runs
+        } else {
+            window.location.href = fallbackPath;
+        }
     };
+
     const restartBtn = document.getElementById('restartBtn');
-    if (restartBtn) restartBtn.addEventListener('click', (e) => { e.preventDefault(); clearSessionAndNavigate('start', 'start.html'); });
+    if (restartBtn) restartBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        clearSessionAndNavigate('start', 'start.html');
+    });
+
     const mainMenuBtn = document.getElementById('mainMenuBtn');
-    if (mainMenuBtn) mainMenuBtn.addEventListener('click', (e) => { e.preventDefault(); clearSessionAndNavigate('home', '../index.html'); });
-  }
+    if (mainMenuBtn) mainMenuBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        clearSessionAndNavigate('home', '../index.html');
+    });
+}
 } 
 
 // ==========================================
@@ -439,34 +501,22 @@ window.hideLoading = () => {
     if (overlay) overlay.classList.add('hidden');
 };
 
-// HELPER: Calculates perfect PDF dimensions, orientation, and centering
 function calculatePdfLayout(canvas) {
     const ptWidth = canvas.width * 0.75;
     const ptHeight = canvas.height * 0.75;
     
-    // Standard A4 Landscape width is ~842 points
     const MIN_PDF_WIDTH = 842; 
     const pdfPageWidth = Math.max(ptWidth, MIN_PDF_WIDTH);
     
-    // Dynamically calculate orientation (Landscape if wider than tall, Portrait if taller)
     const orientation = pdfPageWidth > ptHeight ? 'l' : 'p';
-    
-    // Center the image if the table is smaller than the standard page width
     const xOffset = (pdfPageWidth > ptWidth) ? (pdfPageWidth - ptWidth) / 2 : 0;
 
-    return { 
-        ptWidth, 
-        ptHeight, 
-        pdfPageWidth, 
-        orientation, 
-        xOffset 
-    };
+    return { ptWidth, ptHeight, pdfPageWidth, orientation, xOffset };
 }
 
 async function triggerFastExport(format) {
     window.showLoading(format === 'img' ? "Generating Image..." : "Generating PDF...");
 
-    // 1. Build a temporary off-screen container
     const container = document.createElement('div');
     container.id = 'temp-export-container';
     container.style.position = 'absolute';
@@ -552,7 +602,6 @@ async function triggerFastExport(format) {
                 window.hideLoading();
             }
         } else {
-            // FIX: Using the new Helper Function for a much cleaner PDF generation block
             const imgData = canvas.toDataURL('image/png');
             const { jsPDF } = window.jspdf;
             
@@ -583,6 +632,7 @@ let simInstance = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     simInstance = new CacheSimulator();
+    simInstance.setupGlobalControls();
     window.startSimulation = () => { simInstance.init(); };
     if (!window.javaApp) setTimeout(() => simInstance.init(), 50);
 
@@ -592,3 +642,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportPdfBtn = document.getElementById('exportPdfBtn');
     if (exportPdfBtn) exportPdfBtn.addEventListener('click', () => triggerFastExport('pdf'));
 });
+
+// ==========================================
+// BULLETPROOF NAVIGATION LOGIC
+// ==========================================
+window.goToPage = function(viewName, fallbackPath) {
+    // 1. Wipe temporary browser memory safely
+    try {
+        sessionStorage.removeItem('cacheSimulationConfig'); 
+        localStorage.removeItem('cacheSimulationConfig');
+    } catch(e) { console.warn("Could not clear local storage."); }
+    
+    // 2. Wipe Java memory and route
+    if (window.javaApp) { 
+        try { 
+            window.javaApp.saveConfig(""); 
+        } catch (e) {} 
+        window.javaApp.navigate(viewName); 
+    } else { 
+        // 3. Fallback for testing in normal Chrome/Edge
+        window.location.href = fallbackPath; 
+    }
+};

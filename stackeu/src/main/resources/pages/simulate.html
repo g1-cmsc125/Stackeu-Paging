@@ -22,10 +22,12 @@
         </header>
 
        <div class="action-buttons">
-            <button id="restartBtn" class="btn-action primary small-btn">Restart</button>
+            <button id="restartBtn" class="btn-action primary small-btn" onclick="goToPage('start', 'start.html')">Restart</button>
+            
             <button id="exportImgBtn" class="btn-action export small-btn">Save IMG</button>
             <button id="exportPdfBtn" class="btn-action export small-btn" style="background-color: #c0392b;">Save PDF</button>
-            <button id="mainMenuBtn" class="btn-action secondary small-btn">Main Menu</button>
+            
+            <button id="mainMenuBtn" class="btn-action secondary small-btn" onclick="goToPage('home', '../index.html')">Main Menu</button>
         </div>
 
         <div id="exportLoadingOverlay" class="loading-overlay hidden">
