@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STACK•EU - Simulation</title>
+    
     <link rel="stylesheet" href="../styles/index.css">
     <link rel="stylesheet" href="../styles/simulate.css"> 
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <script src="../scripts/simulate.js"></script>
 </head>
 <body>
@@ -17,21 +22,19 @@
         </header>
 
        <div class="action-buttons">
-            <button id="restartBtn" class="btn-action primary small-btn" style="cursor: pointer;">Restart</button>
-            <button id="exportImgBtn" class="btn-action export small-btn" style="cursor: pointer;">Save IMG</button>
-            <button id="exportPdfBtn" class="btn-action export small-btn" style="cursor: pointer; background-color: #c0392b;">Save PDF</button>
-            <button id="mainMenuBtn" class="btn-action secondary small-btn" style="cursor: pointer;">Main Menu</button>
+            <button id="restartBtn" class="btn-action primary small-btn">Restart</button>
+            <button id="exportImgBtn" class="btn-action export small-btn">Save IMG</button>
+            <button id="exportPdfBtn" class="btn-action export small-btn" style="background-color: #c0392b;">Save PDF</button>
+            <button id="mainMenuBtn" class="btn-action secondary small-btn">Main Menu</button>
         </div>
 
         <div id="exportLoadingOverlay" class="loading-overlay hidden">
             <div class="loading-modal">
                 <div class="spinner"></div>
                 <h3 id="loadingTitle">Processing Export...</h3>
-                <p>Generating optimized document. Please wait.</p>
+                <p>Compiling Document...</p>
             </div>
         </div>
     </main>
-
-    <iframe id="exportFrame" src="export.html" style="display: none;"></iframe>
 </body>
 </html>

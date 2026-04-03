@@ -1,16 +1,17 @@
 package stackeu;
 
-import javafx.stage.FileChooser;
-import java.nio.file.Files;
-import java.util.Base64;
 import java.io.File;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 import java.util.logging.Logger;
+
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebView;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import netscape.javascript.JSObject;
 
@@ -93,7 +94,7 @@ public class AppFrame extends StackPane {
                 fileChooser.setTitle("Save Simulation Image");
                 fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Files", "*.png"));
                 String timeStamp = new SimpleDateFormat("MMddyy_HHmmss").format(new Date());
-                fileChooser.setInitialFileName(timeStamp + "_PG.png");
+                fileChooser.setInitialFileName(timeStamp + "_StackEU_Results.png");
 
                 File file = fileChooser.showSaveDialog(simulateView.getScene().getWindow());
                 
@@ -101,8 +102,7 @@ public class AppFrame extends StackPane {
                     String base64Data = base64.substring(base64.indexOf(",") + 1);
                     byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
                     Files.write(file.toPath(), decodedBytes);
-                    
-                    simulateView.getEngine().executeScript("alert('Image saved successfully!'); typeof window.hideLoading === 'function' && window.hideLoading();");
+                    simulateView.getEngine().executeScript("typeof window.hideLoading === 'function' && window.hideLoading();");
                 } else {
                     simulateView.getEngine().executeScript("typeof window.hideLoading === 'function' && window.hideLoading();");
                 }
@@ -121,7 +121,7 @@ public class AppFrame extends StackPane {
                 fileChooser.setTitle("Save Simulation PDF");
                 fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
                 String timeStamp = new SimpleDateFormat("MMddyy_HHmmss").format(new Date());
-                fileChooser.setInitialFileName(timeStamp + "_PG.pdf");
+                fileChooser.setInitialFileName(timeStamp + "_StackEU_Results.pdf");
 
                 File file = fileChooser.showSaveDialog(simulateView.getScene().getWindow());
                 
@@ -129,8 +129,7 @@ public class AppFrame extends StackPane {
                     String base64Data = base64.substring(base64.indexOf(",") + 1);
                     byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
                     Files.write(file.toPath(), decodedBytes);
-                    
-                    simulateView.getEngine().executeScript("alert('PDF saved successfully!'); typeof window.hideLoading === 'function' && window.hideLoading();");
+                    simulateView.getEngine().executeScript("typeof window.hideLoading === 'function' && window.hideLoading();");
                 } else {
                     simulateView.getEngine().executeScript("typeof window.hideLoading === 'function' && window.hideLoading();");
                 }

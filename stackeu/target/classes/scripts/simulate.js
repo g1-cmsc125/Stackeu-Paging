@@ -44,16 +44,15 @@ class CacheSimulator {
 
   runAllSelected() {
     this.config.selectedAlgorithms.forEach(algoFullName => {
-      // FIX: Resilient matching ensures FIFO (and all others) always run perfectly
       const key = algoFullName.toUpperCase();
       
-      if (key.includes('FIFO')) this.results[algoFullName] = this.simulateFIFO();
-      else if (key.includes('LRU')) this.results[algoFullName] = this.simulateLRU();
-      else if (key.includes('LFU')) this.results[algoFullName] = this.simulateLFU();
-      else if (key.includes('OPT')) this.results[algoFullName] = this.simulateOPT();
-      else if (key.includes('MFU')) this.results[algoFullName] = this.simulateMFU();
-      else if (key.includes('ENHANCED')) this.results[algoFullName] = this.simulateEnhancedSecondChance();
-      else if (key.includes('SECOND CHANCE')) this.results[algoFullName] = this.simulateSecondChance();
+      if (key.indexOf('FIFO') !== -1) this.results[algoFullName] = this.simulateFIFO();
+      else if (key.indexOf('LRU') !== -1) this.results[algoFullName] = this.simulateLRU();
+      else if (key.indexOf('LFU') !== -1) this.results[algoFullName] = this.simulateLFU();
+      else if (key.indexOf('OPT') !== -1) this.results[algoFullName] = this.simulateOPT();
+      else if (key.indexOf('MFU') !== -1) this.results[algoFullName] = this.simulateMFU();
+      else if (key.indexOf('ENHANCED') !== -1) this.results[algoFullName] = this.simulateEnhancedSecondChance();
+      else if (key.indexOf('SECOND CHANCE') !== -1) this.results[algoFullName] = this.simulateSecondChance();
       else console.warn(`Algorithm logic not found for: ${algoFullName}`);
     });
   }
@@ -426,7 +425,7 @@ class CacheSimulator {
 } 
 
 // ==========================================
-// DELEGATED EXPORT LOGIC
+// SUPER-FAST HIDDEN EXPORT LOGIC
 // ==========================================
 window.showLoading = (text) => {
     const title = document.getElementById('loadingTitle');
@@ -440,40 +439,144 @@ window.hideLoading = () => {
     if (overlay) overlay.classList.add('hidden');
 };
 
-// Listen for the iframe completing the export
-window.addEventListener('message', (event) => {
-    if(event.data.type === 'EXPORT_READY') {
-        window.hideLoading();
-        if(event.data.format === 'img') {
-            if(window.javaApp) window.javaApp.saveImage(event.data.base64);
-            else {
+// HELPER: Calculates perfect PDF dimensions, orientation, and centering
+function calculatePdfLayout(canvas) {
+    const ptWidth = canvas.width * 0.75;
+    const ptHeight = canvas.height * 0.75;
+    
+    // Standard A4 Landscape width is ~842 points
+    const MIN_PDF_WIDTH = 842; 
+    const pdfPageWidth = Math.max(ptWidth, MIN_PDF_WIDTH);
+    
+    // Dynamically calculate orientation (Landscape if wider than tall, Portrait if taller)
+    const orientation = pdfPageWidth > ptHeight ? 'l' : 'p';
+    
+    // Center the image if the table is smaller than the standard page width
+    const xOffset = (pdfPageWidth > ptWidth) ? (pdfPageWidth - ptWidth) / 2 : 0;
+
+    return { 
+        ptWidth, 
+        ptHeight, 
+        pdfPageWidth, 
+        orientation, 
+        xOffset 
+    };
+}
+
+async function triggerFastExport(format) {
+    window.showLoading(format === 'img' ? "Generating Image..." : "Generating PDF...");
+
+    // 1. Build a temporary off-screen container
+    const container = document.createElement('div');
+    container.id = 'temp-export-container';
+    container.style.position = 'absolute';
+    container.style.top = '-9999px';
+    container.style.left = '-9999px';
+    container.style.width = 'max-content'; 
+    container.style.minWidth = '1200px'; 
+    container.style.backgroundColor = '#F0EAB6';
+    container.style.padding = '40px';
+    container.style.color = '#606844';
+    container.style.fontFamily = "'Segoe UI', Arial, sans-serif";
+
+    let html = `
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="margin: 0; font-size: 2.5rem;">STACK•EU Results</h1>
+            <p style="font-size: 1.2rem; color: #6A6928; font-weight: bold;">Reference String: ${document.querySelector('.reference-string').textContent}</p>
+        </div>
+    `;
+
+    for(const [algo, data] of Object.entries(simInstance.results)) {
+        html += `<div style="background: #f1f8e6; padding: 30px; border-radius: 20px; border: 3px solid #cddba9; margin-bottom: 40px;">
+                    <h2 style="color: #606844; margin-top: 0;">${algo}</h2>
+                    <table style="width: 100%; border-collapse: separate; border-spacing: 4px; text-align: center;"><tr>`;
+
+        data.history.forEach(step => { html += `<th style="font-size: 1.3rem; color: #6A6928; padding-bottom: 10px;">${step.page}</th>`; });
+        html += `</tr>`;
+
+        let maxFrames = simInstance.frameSize;
+        for(let f=0; f < maxFrames; f++) {
+            html += `<tr>`;
+            data.history.forEach(step => {
+                let val = step.frames[f];
+                if(val !== undefined) {
+                    let isTarget = val === step.page;
+                    let bg = isTarget ? (step.isHit ? '#5f7adb' : '#d8737f') : '#cdbf72';
+                    let color = 'white';
+                    html += `<td style="height: 40px; min-width: 40px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; background-color: ${bg}; color: ${color};">${val}</td>`;
+                } else {
+                    html += `<td style="height: 40px; min-width: 40px; border-radius: 8px; background-color: rgba(205, 219, 169, 0.3);"></td>`;
+                }
+            });
+            html += `</tr>`;
+        }
+
+        html += `<tr>`;
+        data.history.forEach(step => {
+            let text = step.isHit ? 'Hit' : 'Miss';
+            let color = step.isHit ? '#5f7adb' : '#d8737f';
+            html += `<td style="font-size: 1.1rem; font-weight: bold; padding-top: 5px; color: ${color};">${text}</td>`;
+        });
+        html += `</tr></table>`;
+        html += `<div style="text-align: right; font-size: 1.2rem; color: #6A6928; font-weight: bold; margin-top: 15px;">Total Faults: ${data.faults} &nbsp;|&nbsp; Total Hits: ${data.hits}</div></div>`;
+    }
+
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    await new Promise(r => setTimeout(r, 100));
+
+    try {
+        const targetWidth = container.scrollWidth;
+        const targetHeight = container.scrollHeight;
+
+        const canvas = await html2canvas(container, {
+            scale: 1.5,
+            backgroundColor: '#F0EAB6',
+            logging: false,
+            width: targetWidth,
+            height: targetHeight,
+            windowWidth: targetWidth,
+            windowHeight: targetHeight
+        });
+
+        if (format === 'img') {
+            const base64Img = canvas.toDataURL('image/png');
+            if (window.javaApp) {
+                window.javaApp.saveImage(base64Img); 
+            } else {
                 const link = document.createElement('a');
-                link.download = "Simulation.png"; link.href = event.data.base64; link.click();
+                link.download = "Simulation_Results.png";
+                link.href = base64Img;
+                link.click();
+                window.hideLoading();
             }
         } else {
-            if(window.javaApp) window.javaApp.savePdf(event.data.base64);
-            else {
-                const link = document.createElement('a');
-                link.download = "Simulation.pdf"; link.href = event.data.base64; link.click();
+            // FIX: Using the new Helper Function for a much cleaner PDF generation block
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            
+            const layout = calculatePdfLayout(canvas);
+            
+            const customPdf = new jsPDF(layout.orientation, 'pt', [layout.pdfPageWidth, layout.ptHeight]);
+            customPdf.addImage(imgData, 'PNG', layout.xOffset, 0, layout.ptWidth, layout.ptHeight);
+            
+            const base64Pdf = customPdf.output('datauristring');
+
+            if (window.javaApp) {
+                window.javaApp.savePdf(base64Pdf); 
+            } else {
+                customPdf.save("Simulation_Results.pdf");
+                window.hideLoading();
             }
         }
+    } catch (err) {
+        console.error("Export failed:", err);
+        alert("Failed to export.");
+        window.hideLoading();
+    } finally {
+        document.body.removeChild(container);
     }
-});
-
-function triggerIframeExport(format) {
-    const iframe = document.getElementById('exportFrame');
-    if (!iframe) { alert("Export iframe missing!"); return; }
-
-    const payload = {
-        refString: document.querySelector('.reference-string').textContent,
-        frameSize: document.querySelectorAll('.simulation-card')[0].querySelectorAll('.frame').length / document.querySelectorAll('.simulation-card')[0].querySelectorAll('.num-cell').length, // Derived frame size
-        results: simInstance.results
-    };
-
-    window.showLoading(format === 'img' ? "Generating Optimized Image..." : "Generating Optimized PDF...");
-    
-    // Pass data down to the invisible iframe
-    iframe.contentWindow.postMessage({ type: 'GENERATE_EXPORT', format: format, payload: payload }, '*');
 }
 
 let simInstance = null;
@@ -484,8 +587,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!window.javaApp) setTimeout(() => simInstance.init(), 50);
 
     const exportImgBtn = document.getElementById('exportImgBtn');
-    if (exportImgBtn) exportImgBtn.addEventListener('click', () => triggerIframeExport('img'));
+    if (exportImgBtn) exportImgBtn.addEventListener('click', () => triggerFastExport('img'));
 
     const exportPdfBtn = document.getElementById('exportPdfBtn');
-    if (exportPdfBtn) exportPdfBtn.addEventListener('click', () => triggerIframeExport('pdf'));
+    if (exportPdfBtn) exportPdfBtn.addEventListener('click', () => triggerFastExport('pdf'));
 });
