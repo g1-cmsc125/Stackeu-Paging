@@ -8,10 +8,17 @@
 </head>
 <body>
 
+    <div id="splash-screen">
+        <div class="splash-content">
+            <img src="assets/logo.png" alt="StackEU Logo" class="splash-logo">
+            <h1 class="splash-text">STACK<span>•</span>EU</h1>
+            <div class="loading-bar"><div class="progress"></div></div>
+        </div>
+    </div>
+
     <div class="app-container">
         <div class="visual-pane">
             <div class="vertical-track">
-
                 <img src="assets/home-logo.png" alt="">
             </div>
         </div>
@@ -24,6 +31,20 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for 2.5 seconds (matching the loading bar animation)
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.classList.add('fade-out'); // Trigger CSS fade
+                    // Remove from DOM completely after fade finishes
+                    setTimeout(() => splash.remove(), 800); 
+                }
+            }, 2500); 
+        });
+    </script>
 
 </body>
 </html>
