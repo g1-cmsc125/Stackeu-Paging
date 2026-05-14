@@ -13,6 +13,7 @@ class StartConfig {
     this.init();
   }
 
+
   /**
    * Initialize the configuration app
    */

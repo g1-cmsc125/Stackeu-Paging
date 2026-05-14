@@ -646,21 +646,38 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 // BULLETPROOF NAVIGATION LOGIC
 // ==========================================
+// ==========================================
+// BULLETPROOF NAVIGATION LOGIC
+// ==========================================
 window.goToPage = function(viewName, fallbackPath) {
-    // 1. Wipe temporary browser memory safely
-    try {
-        sessionStorage.removeItem('cacheSimulationConfig'); 
-        localStorage.removeItem('cacheSimulationConfig');
-    } catch(e) { console.warn("Could not clear local storage."); }
-    
-    // 2. Wipe Java memory and route
-    if (window.javaApp) { 
-        try { 
-            window.javaApp.saveConfig(""); 
-        } catch (e) {} 
-        window.javaApp.navigate(viewName); 
-    } else { 
-        // 3. Fallback for testing in normal Chrome/Edge
-        window.location.href = fallbackPath; 
-    }
+    // 1. Wipe temporary browser memory safely
+    try {
+        sessionStorage.removeItem('cacheSimulationConfig'); 
+        localStorage.removeItem('cacheSimulationConfig');
+    } catch(e) { console.warn("Could not clear local storage."); }
+
+    // 2. Clear the active simulation instance data in memory and UI
+    if (typeof simInstance !== 'undefined' && simInstance) {
+        // Reset class variables
+        simInstance.config = null;
+        simInstance.referenceString = [];
+        simInstance.results = {};
+        simInstance.frameSize = 0;
+
+        // Immediately wipe the UI to prevent ghosting before navigation
+        const refStringHeader = document.querySelector('.reference-string');
+        if (refStringHeader) refStringHeader.textContent = '';
+        document.querySelectorAll('.simulation-card').forEach(card => card.remove());
+    }
+    
+    // 3. Wipe Java memory and route
+    if (window.javaApp) { 
+        try { 
+            window.javaApp.saveConfig(""); 
+        } catch (e) {} 
+        window.javaApp.navigate(viewName); 
+    } else { 
+        // 4. Fallback for testing in normal Chrome/Edge
+        window.location.href = fallbackPath; 
+    }
 };
